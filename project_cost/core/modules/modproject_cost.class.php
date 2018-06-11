@@ -170,7 +170,7 @@ class modproject_cost extends DolibarrModules
 
         // Dictionaries
 	$this->dictionnaries=array(
-			'langs'=>'immobilier@immobilier',
+			'langs'=>'project_cost@project_cost',
 			'tabname'=>array(
 				MAIN_DB_PREFIX."c_sellist",
 				MAIN_DB_PREFIX."c_project_cost_type"
@@ -229,7 +229,7 @@ class modproject_cost extends DolibarrModules
         // Boxes/Widgets
 		// Add here list of php file(s) stored in project_cost/core/boxes that contains class to show a widget.
         $this->boxes = array(
-        	0=>array('file'=>'project_costwidget1.php@project_cost','note'=>'Widget provided by project_cost','enabledbydefaulton'=>'Home'),
+        	//0=>array('file'=>'project_costwidget1.php@project_cost','note'=>'Widget provided by project_cost','enabledbydefaulton'=>'Home'),
         	//1=>array('file'=>'project_costwidget2.php@project_cost','note'=>'Widget provided by project_cost'),
         	//2=>array('file'=>'project_costwidget3.php@project_cost','note'=>'Widget provided by project_cost')
         );

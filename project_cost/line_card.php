@@ -1,7 +1,7 @@
 <?php
 /* 
  * Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) 2018     Patrick DELCROIX     <pmpdelcroix@gmail.com>
+ * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
  */
 
 /**
- *   	\file       dev/spreads/spread_page.php
+ *   	\file       dev/lines/line_page.php
  *		\ingroup    project_cost othermodule1 othermodule2
  *		\brief      This file is an example of a php page
- *					Initialy built by build_class_from_table on 2018-05-27 19:29
+ *					Initialy built by build_class_from_table on 2018-06-11 21:10
  */
 
 //if (! defined('NOREQUIREUSER'))  define('NOREQUIREUSER','1');
@@ -38,14 +38,15 @@
 
 // Change this following line to use the correct relative path (../, ../../, etc)
 include 'core/lib/includeMain.lib.php';
+
 // Change this following line to use the correct relative path from htdocs
 //include_once(DOL_DOCUMENT_ROOT.'/core/class/formcompany.class.php');
 //require_once 'lib/project_cost.lib.php';
-require_once 'class/spread.class.php';
-require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+require_once 'class/line.class.php';
 require_once 'core/lib/generic.lib.php';
-require_once 'core/lib/spread.lib.php';
-require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
+require_once 'core/lib/line.lib.php';
+//require_once 'core/lib/project_cost.lib.php';
+require_once 'core/lib/line.lib.php';
 dol_include_once('/core/lib/functions2.lib.php');
 //document handling
 dol_include_once('/core/lib/files.lib.php');
@@ -53,26 +54,48 @@ dol_include_once('/core/lib/files.lib.php');
 dol_include_once('/core/class/html.formfile.class.php');
 // include conditionnally of the dolibarr version
 //if((version_compare(DOL_VERSION, "3.8", "<"))){
-dol_include_once('/project_cost/lib/project_cost.lib.php');
+//dol_include_once('/project_cost/lib/project_cost.lib.php');
+require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
 //}
 dol_include_once('/core/class/html.formother.class.php');
 $PHP_SELF=$_SERVER['PHP_SELF'];
 // Load traductions files requiredby by page
 //$langs->load("companies");
-$langs->load("spread@project_cost");
+$langs->load("line@project_cost");
 
 // Get parameter
 $id			= GETPOST('id','int');
 $ref                    = GETPOST('ref','alpha');
 $action		= GETPOST('action','alpha');
-$backtopage = GETPOST('backtopage,alpha');
+$backtopage = GETPOST('backtopage');
 $cancel=GETPOST('cancel');
 $confirm=GETPOST('confirm');
-$token= GETPOST('token','alpha');
-$projectid=GETPOST('Projectid', 'int');
+$tms= GETPOST('tms','alpha');
+$projectid=GETPOST('Projectid','int');
 //// Get parameters
+/*
+$sortfield = GETPOST('sortfield','alpha'); 
+$sortorder = GETPOST('sortorder','alpha')?GETPOST('sortorder','alpha'):'ASC';
+$removefilter=isset($_POST["removefilter_x"]) || isset($_POST["removefilter"]);
+//$applyfilter=isset($_POST["search_x"]) ;//|| isset($_POST["search"]);
+if (!$removefilter )		// Both test must be present to be compatible with all browsers
+{
+    	$ls_ref= GETPOST('ls_ref','alpha');
+	$ls_label= GETPOST('ls_label','alpha');
+	$ls_amount= GETPOST('ls_amount','int');
+	$ls_description= GETPOST('ls_description','alpha');
+	$ls_import_key= GETPOST('ls_import_key','alpha');
+	$ls_status= GETPOST('ls_status','int');
+	$ls_project= GETPOST('ls_project','int');
+	$ls_product= GETPOST('ls_product','int');
+	$ls_supplier_invoice= GETPOST('ls_supplier_invoice','int');
+	$ls_c_project_cost_type= GETPOST('ls_c_project_cost_type','int');
+	$ls_project_cost_spread= GETPOST('ls_project_cost_spread','int');
 
-
+    
+}
+*/
 
 
 
@@ -80,7 +103,7 @@ $projectid=GETPOST('Projectid', 'int');
 
 
  // uncomment to avoid resubmision
-//if(isset( $_SESSION['Projectcostspread_class'][$token]))
+//if(isset( $_SESSION['line_class'][$tms]))
 //{
 
  //   $cancel=TRUE;
@@ -102,29 +125,25 @@ if ($user->societe_id > 0 ||
 */
 
 // create object and set id or ref if provided as parameter
-$object=new Projectcostspread($db);
+$object=new Projectcostline($db);
 if($id>0)
 {
     $object->id=$id; 
     $object->fetch($id);
     $ref=dol_sanitizeFileName($object->ref);
-    if(empty($action))$action='view'; //  the doc handling part send back only the ID without actions
     if($projectid<1){
         $projectid=$object->project;
-    }
-}else if (empty($projectid)){
-    setEventMessage( $langs->trans('noProjectIdPresent').' id:'.$id,'errors');
-}
+    }}
 if(!empty($ref))
 {
     $object->ref=$ref; 
     $object->id=$id; 
     $object->fetch($id);
     $ref=dol_sanitizeFileName($object->ref);
+    $upload_dir = $conf->project_cost->dir_output.'/'.get_exdir($object->id,2,0,0,$object,'Projectcostline').$ref;
     
 }
-//if the action concern the sub then the parent must be in viewmode
-if(preg_match('/^sub/',$action) )$action=($id>0)?'view':'create';
+
 
 /*******************************************************************
 * ACTIONS
@@ -135,27 +154,26 @@ if(preg_match('/^sub/',$action) )$action=($id>0)?'view':'create';
 // Action to add record
 $error=0;
 if ($cancel){
-        ProjectcostspreadReloadPage($backtopage,$projectid,$id,$ref);
+        ProjectcostlineReloadPage($backtopage,$id,$ref);
 }else if (($action == 'add') || ($action == 'update' && ($id>0 || !empty($ref))))
 {
     //block resubmit
-    if(empty($token) || (!isset($_SESSION['Projectcostspread_'.$token]))){
+    if(empty($tms) || (!isset($_SESSION['Projectcostline_'.$tms]))){
             setEventMessage('WrongTimeStamp_requestNotExpected', 'errors');
             $action=($action=='add')?'create':'view';
     }
     //retrive the data
     		$object->ref=GETPOST('Ref');
 		$object->label=GETPOST('Label');
-		$object->ratio=GETPOST('Ratio');
-		$object->soc=GETPOST('Soc');
+		$object->amount=GETPOST('Amount');
 		$object->description=GETPOST('Description');
-		$object->user_creat=GETPOST('Usercreat');
 		$object->import_key=GETPOST('Importkey');
 		$object->status=GETPOST('Status');
-		$object->c_sellist=GETPOST('Csellist');
-		$object->sellist_selected_id=GETPOST('Sellistselectedid');
-		$object->isgroup=GETPOST('Isgroup');
-                $object->project=$projectid;
+		$object->project=GETPOST('Project');
+		$object->product=GETPOST('Product');
+		$object->supplier_invoice=GETPOST('Supplierinvoice');
+		$object->c_project_cost_type=GETPOST('Cprojectcosttype');
+		$object->project_cost_spread=GETPOST('Projectcostspread');
 
     
 
@@ -182,7 +200,7 @@ if ($cancel){
         if ($result > 0)
         {
             // Creation OK
-            unset($_SESSION['Projectcostspread_'.$token]);
+            unset($_SESSION['Projectcostline_'.$tms]);
             setEventMessage('RecordUpdated','mesgs');
 
         }
@@ -222,10 +240,10 @@ if ($cancel){
         if ($result > 0)
         {
                 // Creation OK
-            // remove the token
-               unset($_SESSION['Projectcostspread_'.$token]);
+            // remove the tms
+               unset($_SESSION['Projectcostline_'.$tms]);
                setEventMessage('RecordSucessfullyCreated', 'mesgs');
-               ProjectcostspreadReloadPage($backtopage,$projectid,$result,'');
+               ProjectcostlineReloadPage($backtopage,$result,'');
 
         }else
         {
@@ -249,33 +267,31 @@ if ($cancel){
                 if (! empty($object->errors)) setEventMessages(null,$object->errors,'errors');
                 else setEventMessage('RecordNotDeleted','errors');
             }
-            ProjectcostspreadReloadPage($backtopage,$projectid, 0, '');
+            ProjectcostlineReloadPage($backtopage, 0, '');
          break;
 
 
           
  }             
-//Removing the token array so the order can't be submitted two times
-if(isset( $_SESSION['Projectcostspread_'.$token]))
+//Removing the tms array so the order can't be submitted two times
+if(isset( $_SESSION['line_'.$tms]))
 {
-    unset($_SESSION['Projectcostspread_'.$token]);
+    unset($_SESSION['line_'.$tms]);
 }
 if(($action == 'create') || ($action == 'edit' && ($id>0 || !empty($ref)))){
-    $token=getToken();
-    $_SESSION['Projectcostspread_'.$token]=array();
-    $_SESSION['Projectcostspread_'.$token]['action']=$action;
+    $tms=getToken();
+    $_SESSION['line_'.$tms]=array();
+    $_SESSION['line_'.$tms]['action']=$action;
             
 }
-if($object->id && $object->isgroup){
-    //include 'spreadmember_list.action.tpl.php';
-}
+
 /***************************************************
 * VIEW
 *
 * Put here all code to build page
 ****************************************************/
 
-llxHeader('','Projectcostspread','');
+llxHeader('','Projectcostline','');
 print "<div> <!-- module body-->";
 $form=new Form($db);
 $formother=new FormOther($db);
@@ -305,7 +321,7 @@ switch ($action) {
         $edit=1;
    case 'delete';
         if( $action=='delete' && ($id>0 || $ref!="")){
-         $ret=$form->form_confirm($PHP_SELF.'?action=confirm_delete&id='.$id,$langs->trans('DeleteProjectcostspread'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
+         $ret=$form->form_confirm($PHP_SELF.'?action=confirm_delete&id='.$id,$langs->trans('DeleteProjectcostline'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background\
         }
@@ -317,27 +333,26 @@ switch ($action) {
          dol_fiche_head($headProject, 'stakeholders', $langs->trans("Project"), 0, 'project');
         // tabs
         if($edit==0 && $new==0){ //show tabs
-            $head=ProjectcostspreadPrepareHead($object);
-            dol_fiche_head($head,'card',$langs->trans('Projectcostspread'),0,'project_cost@project_cost');            
+            $head=ProjectcostlinePrepareHead($object);
+            dol_fiche_head($head,'card',$langs->trans('Projectcostline'),0,'project_cost@project_cost');            
         }else{
-            print_fiche_titre($langs->trans('Projectcostspread'));
+            print_fiche_titre($langs->trans('Projectcostline'));
         }
 
 	print '<br>';
         if($edit==1){
             if($new==1){
-                print '<form method="POST" action="'.$PHP_SELF.'?action=add&Projectid='.$projectid.'">';
-                
+                print '<form method="POST" action="'.$PHP_SELF.'?action=add">';
             }else{
-                print '<form method="POST" action="'.$PHP_SELF.'?action=update&id='.$id.'&Projectid='.$projectid.'">';
+                print '<form method="POST" action="'.$PHP_SELF.'?action=update&id='.$id.'">';
             }
-            print '<input type="hidden" name="Projectid" value="'.$projectid.'">';            
-            print '<input type="hidden" name="token" value="'.$token.'">';
+                        
+            print '<input type="hidden" name="tms" value="'.$tms.'">';
             print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
 
         }else {// show the nav bar
-            $basedurl=dol_buildpath("/project_cost/spread_list.php", 1).'?Projectid='.$projectid;
-            $linkback = '<a href="'.$basedurl.(! empty($socid)?'&socid='.$socid:'').'">'.$langs->trans("BackToList").'</a>';
+            $basedurl=dirname($PHP_SELF).'/line_list.php';
+            $linkback = '<a href="'.$basedurl.(! empty($socid)?'?socid='.$socid:'').'">'.$langs->trans("BackToList").'</a>';
             if(!isset($object->ref))//save ref if any
                 $object->ref=$object->id;
             print $form->showrefnav($object, 'action=view&id', $linkback, 1, 'rowid', 'ref', '');
@@ -374,25 +389,13 @@ switch ($action) {
 		print "\n</tr>\n";
 		print "<tr>\n";
 
-// show the field ratio
+// show the field amount
 
-		print '<td>'.$langs->trans('Ratio').' </td><td>';
+		print '<td>'.$langs->trans('Amount').' </td><td>';
 		if($edit==1){
-			print '<input type="text" value="'.$object->ratio.'" name="Ratio">';
+			print '<input type="text" value="'.$object->amount.'" name="Amount">';
 		}else{
-			print $object->ratio;
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
-
-// show the field soc
-
-		print '<td>'.$langs->trans('Soc').' </td><td>';
-		if($edit==1){
-		print select_generic('societe','rowid','Soc','nom','',$object->soc);
-		}else{
-		print print_generic('societe','rowid',$object->soc,'nom','');
+			print $object->amount;
 		}
 		print "</td>";
 		print "\n</tr>\n";
@@ -410,54 +413,85 @@ switch ($action) {
 		print "\n</tr>\n";
 		print "<tr>\n";
 
+// show the field import_key
 
-
+		print '<td>'.$langs->trans('Importkey').' </td><td>';
+		if($edit==1){
+			print '<input type="text" value="'.$object->import_key.'" name="Importkey">';
+		}else{
+			print $object->import_key;
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
 
 // show the field status
 
 		print '<td class="fieldrequired">'.$langs->trans('Status').' </td><td>';
 		if($edit==1){
-                    global $arrayStatus;
-			print $form->selectarray('Status',$arrayStatus,$object->status);
-                        }else{
-			print $object->getLibStatut(4);
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
-if($conf->global->PROJECT_COST_ATTACHED_ITEM){
-// show the field c_sellist
-
-		print '<td>'.$langs->trans('Csellist').' </td><td>';
-		if($edit==1){
-			print '<input type="text" value="'.$object->c_sellist.'" name="Csellist">';
+			print '<input type="text" value="'.$object->status.'" name="Status">';
 		}else{
-			print $object->c_sellist;
+			print $object->status;
 		}
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
 
-// show the field sellist_selected_id
+// show the field project
 
-		print '<td>'.$langs->trans('Sellistselectedid').' </td><td>';
+		print '<td class="fieldrequired">'.$langs->trans('Project').' </td><td>';
 		if($edit==1){
-                    print '<input type="text" value="'.$object->c_sellist.'" name="Sellistselected">';
-
+		print select_generic('project','rowid','Project','rowid','description',$object->project);
 		}else{
-		print $object->sellist_selected_id;
+		print print_generic('project','rowid',$object->project,'rowid','description');
 		}
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
-}
-// show the field isgroup
 
-		print '<td>'.$langs->trans('Isgroup').' </td><td>';
+// show the field product
+
+		print '<td>'.$langs->trans('Product').' </td><td>';
 		if($edit==1){
-			print '<input type="checkbox" value="1" name="Isgroup" '.($object->isgroup?'checked':'').'>';
+		print select_generic('product','rowid','Product','rowid','description',$object->product);
 		}else{
-			print '<input type="checkbox" name="Isgroup" disabled '.($object->isgroup?'checked':'').' >';
+		print print_generic('product','rowid',$object->product,'rowid','description');
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+
+// show the field supplier_invoice
+
+		print '<td>'.$langs->trans('Supplierinvoice').' </td><td>';
+		if($edit==1){
+		print select_generic('supplier_invoice','rowid','Supplierinvoice','rowid','description',$object->supplier_invoice);
+		}else{
+		print print_generic('supplier_invoice','rowid',$object->supplier_invoice,'rowid','description');
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+
+// show the field c_project_cost_type
+
+		print '<td>'.$langs->trans('Cprojectcosttype').' </td><td>';
+		if($edit==1){
+			print '<input type="text" value="'.$object->c_project_cost_type.'" name="Cprojectcosttype">';
+		}else{
+			print $object->c_project_cost_type;
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+
+// show the field project_cost_spread
+
+		print '<td>'.$langs->trans('Projectcostspread').' </td><td>';
+		if($edit==1){
+		print select_generic('project_cost_spread','rowid','Projectcostspread','rowid','description',$object->project_cost_spread);
+		}else{
+		print print_generic('project_cost_spread','rowid',$object->project_cost_spread,'rowid','description');
 		}
 		print "</td>";
 		print "\n</tr>\n";
@@ -486,14 +520,14 @@ if($conf->global->PROJECT_COST_ATTACHED_ITEM){
                 print '<div class="tabsAction">';
 
                 // Boutons d'actions
-                //if($user->rights->Projectcostspread->edit)
+                //if($user->rights->Projectcostline->edit)
                 //{
-                    print '<a href="'.$PHP_SELF.'?id='.$id.'&action=edit&Projectid='.$projectid.'" class="butAction">'.$langs->trans('Update').'</a>';
+                    print '<a href="'.$PHP_SELF.'?id='.$id.'&action=edit" class="butAction">'.$langs->trans('Update').'</a>';
                 //}
                 
-                //if ($user->rights->Projectcostspread->delete)
+                //if ($user->rights->Projectcostline->delete)
                 //{
-                    print '<a class="butActionDelete" href="'.$PHP_SELF.'?id='.$id.'&action=delete&Projectid='.$projectid.'">'.$langs->trans('Delete').'</a>';
+                    print '<a class="butActionDelete" href="'.$PHP_SELF.'?id='.$id.'&action=delete">'.$langs->trans('Delete').'</a>';
                 //}
                 //else
                 //{
@@ -506,9 +540,9 @@ if($conf->global->PROJECT_COST_ATTACHED_ITEM){
         break;
     }
         case 'viewinfo':
-        print_fiche_titre($langs->trans('Projectcostspread'));
-        $head=ProjectcostspreadPrepareHead($object);
-        dol_fiche_head($head,'info',$langs->trans("Projectcostspread"),0,'project_cost@project_cost');            
+        print_fiche_titre($langs->trans('Projectcostline'));
+        $head=ProjectcostlinePrepareHead($object);
+        dol_fiche_head($head,'info',$langs->trans("Projectcostline"),0,'project_cost@project_cost');            
         print '<table width="100%"><tr><td>';
         dol_print_object_info($object);
         print '</td></tr></table>';
@@ -517,18 +551,13 @@ if($conf->global->PROJECT_COST_ATTACHED_ITEM){
 
     case 'delete':
         if( ($id>0 || $ref!='')){
-         $ret=$form->form_confirm($PHP_SELF.'?action=confirm_delete&id='.$id,$langs->trans('DeleteProjectcostspread'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
+         $ret=$form->form_confirm($PHP_SELF.'?action=confirm_delete&id='.$id,$langs->trans('DeleteProjectcostline'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background        
         }
 }
 dol_fiche_end();
 
-if($object->id && $object->isgroup){
-   // include 'spreadmember_list.view.tpl.php';
-    include 'spreadmember_list.php';
-}
-dol_fiche_end();
 // End of page
 llxFooter();
 $db->close();

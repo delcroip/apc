@@ -1,7 +1,7 @@
 <?php
 /* Copyright (C) 2007-2012 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2014	   Juanjo Menent		<jmenent@2byte.es>
- * Copyright (C) 2018	   Patrick DELCROIX     <pmpdelcroix@gmail.com>
+ * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
  */
 
 /**
- *  \file       dev/projectcostspreadmembers/projectcostspreadmember.class.php
+ *  \file       dev/projectcostlines/projectcostline.class.php
  *  \ingroup    project_cost othermodule1 othermodule2
  *  \brief      This file is an example for a CRUD class file (Create/Read/Update/Delete)
- *				Initialy built by build_class_from_table on 2018-06-01 19:05
+ *				Initialy built by build_class_from_table on 2018-06-11 21:10
  */
 
 // Put here all includes required by your class file
@@ -33,26 +33,36 @@ require_once(DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php");
 /**
  *	Put here description of your class
  */
-class Projectcostspreadmember extends CommonObject
+class Projectcostline extends CommonObject
 {
     /**
      * @var string ID to identify managed object
      */				//!< To return several error codes (or messages)
-    public $element='projectcostspreadmember';			//!< Id that identify managed objects
+    public $element='projectcostline';			//!< Id that identify managed objects
     /**
      * @var string Name of table without prefix where object is stored
      */    
-    public $table_element='project_cost_spread_member';		//!< Name of table without prefix where object is stored
+    public $table_element='project_cost_line';		//!< Name of table without prefix where object is stored
 
     public $id;
     // BEGIN OF automatic var creation
     
-	public $group_id;
-	public $member_id;
+	public $ref;
+	public $entity;
+	public $label;
+	public $amount;
+	public $description;
 	public $date_creation='';
 	public $tms='';
 	public $user_creat;
 	public $user_modif;
+	public $import_key;
+	public $status;
+	public $project;
+	public $product;
+	public $supplier_invoice;
+	public $c_project_cost_type;
+	public $project_cost_spread;
 
     
     // END OF automatic var creation
@@ -91,18 +101,36 @@ class Projectcostspreadmember extends CommonObject
         // Insert request
         $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element."(";
         
-		$sql.= 'group_id,';
-		$sql.= 'member_id,';
+		$sql.= 'ref,';
+		$sql.= 'label,';
+		$sql.= 'amount,';
+		$sql.= 'description,';
 		$sql.= 'date_creation,';
-		$sql.= 'fk_user_creat';
+		$sql.= 'fk_user_creat,';
+		$sql.= 'import_key,';
+		$sql.= 'status,';
+		$sql.= 'fk_project,';
+		$sql.= 'fk_product,';
+		$sql.= 'fk_supplier_invoice,';
+		$sql.= 'c_project_cost_type,';
+		$sql.= 'fk_project_cost_spread';
 
         
         $sql.= ") VALUES (";
         
-		$sql.=' '.(empty($this->group_id)?'NULL':"'".$this->group_id."'").',';
-		$sql.=' '.(empty($this->member_id)?'NULL':"'".$this->member_id."'").',';
+		$sql.=' '.(empty($this->ref)?'NULL':"'".$this->db->escape($this->ref)."'").',';
+		$sql.=' '.(empty($this->label)?'NULL':"'".$this->db->escape($this->label)."'").',';
+		$sql.=' '.(empty($this->amount)?'NULL':"'".$this->amount."'").',';
+		$sql.=' '.(empty($this->description)?'NULL':"'".$this->db->escape($this->description)."'").',';
 		$sql.=' NOW() ,';
-		$sql.=' "'.$user->id.'"';
+		$sql.=' "'.$user->id.'",';
+		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").',';
+		$sql.=' '.(empty($this->status)?'NULL':"'".$this->status."'").',';
+		$sql.=' '.(empty($this->project)?'NULL':"'".$this->project."'").',';
+		$sql.=' '.(empty($this->product)?'NULL':"'".$this->product."'").',';
+		$sql.=' '.(empty($this->supplier_invoice)?'NULL':"'".$this->supplier_invoice."'").',';
+		$sql.=' '.(empty($this->c_project_cost_type)?'NULL':"'".$this->c_project_cost_type."'").',';
+		$sql.=' '.(empty($this->project_cost_spread)?'NULL':"'".$this->project_cost_spread."'").'';
 
         
         $sql.= ")";
@@ -161,12 +189,22 @@ class Projectcostspreadmember extends CommonObject
         $sql = "SELECT";
         $sql.= " t.rowid,";
         
-		$sql.=' t.group_id,';
-		$sql.=' t.member_id,';
+		$sql.=' t.ref,';
+		$sql.=' t.entity,';
+		$sql.=' t.label,';
+		$sql.=' t.amount,';
+		$sql.=' t.description,';
 		$sql.=' t.date_creation,';
 		$sql.=' t.tms,';
 		$sql.=' t.fk_user_creat,';
-		$sql.=' t.fk_user_modif';
+		$sql.=' t.fk_user_modif,';
+		$sql.=' t.import_key,';
+		$sql.=' t.status,';
+		$sql.=' t.fk_project,';
+		$sql.=' t.fk_product,';
+		$sql.=' t.fk_supplier_invoice,';
+		$sql.=' t.c_project_cost_type,';
+		$sql.=' t.fk_project_cost_spread';
 
         
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
@@ -181,12 +219,22 @@ class Projectcostspreadmember extends CommonObject
                 $obj = $this->db->fetch_object($resql);
                 $this->id    = $obj->rowid;
                 
-				$this->group_id = $obj->group_id;
-				$this->member_id = $obj->member_id;
+				$this->ref = $obj->ref;
+				$this->entity = $obj->entity;
+				$this->label = $obj->label;
+				$this->amount = $obj->amount;
+				$this->description = $obj->description;
 				$this->date_creation = $this->db->jdate($obj->date_creation);
 				$this->tms = $this->db->jdate($obj->tms);
 				$this->user_creat = $obj->fk_user_creat;
 				$this->user_modif = $obj->fk_user_modif;
+				$this->import_key = $obj->import_key;
+				$this->status = $obj->status;
+				$this->project = $obj->fk_project;
+				$this->product = $obj->fk_product;
+				$this->supplier_invoice = $obj->fk_supplier_invoice;
+				$this->c_project_cost_type = $obj->c_project_cost_type;
+				$this->project_cost_spread = $obj->fk_project_cost_spread;
 
                 
             }
@@ -256,6 +304,7 @@ class Projectcostspreadmember extends CommonObject
             }
     }
 
+ 
      /**
      *	Return clickable name (with picto eventually)
      *
@@ -267,8 +316,10 @@ class Projectcostspreadmember extends CommonObject
      */
     function getNomUrl($htmlcontent,$id=0,$ref='',$withpicto=0)
     {
-    	global $langs;
+	global $conf, $langs;
 
+
+        if (! empty($conf->dol_no_mouse_hover)) $notooltip=1;   // Force disable tooltips
     	$result='';
         if(empty($ref) && $id==0){
             if(isset($this->id))  {
@@ -279,23 +330,38 @@ class Projectcostspreadmember extends CommonObject
                 $ref=$this->ref;
             }
         }
+        $linkclose='';
+        if (empty($notooltip))
+        {
+            if (! empty($conf->global->MAIN_OPTIMIZEFORTEXTBROWSER))
+            {
+                $label=$langs->trans("Showspread");
+                $linkclose.=' alt="'.dol_escape_htmltag($label, 1).'"';
+            }
+            $linkclose.=' title="'.dol_escape_htmltag($label, 1).'"';
+            $linkclose.=' class="classfortooltip'.($morecss?' '.$morecss:'').'"';
+        }else $linkclose = ($morecss?' class="'.$morecss.'"':'');
         
         if($id){
-            $lien = '<a href="'.dol_buildpath('/project_cost/spreadmember_card.php').'?id='.$id.'&action=view">';
+            $lien = '<a href="'.dol_buildpath('/project_cost/line_card.php',1).'id='.$id.'&action=view"'.$linkclose.'>';
         }else if (!empty($ref)){
-            $lien = '<a href="'.dol_buildpath('/project_cost/spreadmember_card.php').'?ref='.$ref.'&action=view">';
+            $lien = '<a href="'.dol_buildpath('/project_cost/line_card.php',1).'?ref='.$ref.'&action=view"'.$linkclose.'>';
         }else{
             $lien =  "";
         }
         $lienfin=empty($lien)?'':'</a>';
 
-    	$picto='spread@project_cost';
-        
+    	$picto='generic';
+        $label = '<u>' . $langs->trans("spread") . '</u>';
+        $label.= '<br>';
         if($ref){
-            $label=$langs->trans("Show").': '.$ref;
+            $label.=$langs->trans("Red").': '.$ref;
         }else if($id){
-            $label=$langs->trans("Show").': '.$id;
+            $label.=$langs->trans("#").': '.$id;
         }
+        
+        
+        
     	if ($withpicto==1){ 
             $result.=($lien.img_object($label,$picto).$htmlcontent.$lienfin);
         }else if ($withpicto==2) {
@@ -304,7 +370,68 @@ class Projectcostspreadmember extends CommonObject
             $result.=$lien.$htmlcontent.$lienfin;
         }
     	return $result;
-    }    
+    }  
+    
+    /**
+	 *  Retourne le libelle du status d'un user (actif, inactif)
+	 *
+	 *  @param	int		$mode          0=libelle long, 1=libelle court, 2=Picto + Libelle court, 3=Picto, 4=Picto + Libelle long, 5=Libelle court + Picto
+	 *  @return	string 			       Label of status
+	 */
+	function getLibStatut($mode=0)
+	{
+		return $this->LibStatut($this->status,$mode);
+	}
+
+	/**
+	 *  Return the status
+	 *
+	 *  @param	int		$status        	Id status
+	 *  @param  int		$mode          	0=long label, 1=short label, 2=Picto + short label, 3=Picto, 4=Picto + long label, 5=Short label + Picto, 6=Long label + Picto
+	 *  @return string 			       	Label of status
+	 */
+	static function LibStatut($status,$mode=0)
+	{
+		global $langs;
+
+		if ($mode == 0)
+		{
+			$prefix='';
+			if ($status == 1) return $langs->trans('Enabled');
+			if ($status == 0) return $langs->trans('Disabled');
+		}
+		if ($mode == 1)
+		{
+			if ($status == 1) return $langs->trans('Enabled');
+			if ($status == 0) return $langs->trans('Disabled');
+		}
+		if ($mode == 2)
+		{
+			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
+			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+		}
+		if ($mode == 3)
+		{
+			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4');
+			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5');
+		}
+		if ($mode == 4)
+		{
+			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
+			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+		}
+		if ($mode == 5)
+		{
+			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
+			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+		}
+		if ($mode == 6)
+		{
+			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
+			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+		}
+	}
+
     /**
      *  Delete object in database
      *
@@ -369,7 +496,7 @@ class Projectcostspreadmember extends CommonObject
     {
         global $user,$langs;
         $error=0;
-        $object=new Projectcostspreadmember($this->db);
+        $object=new Projectcostline($this->db);
         $this->db->begin();
         // Load source object
         $object->fetch($fromid);
@@ -412,12 +539,22 @@ class Projectcostspreadmember extends CommonObject
     {
         $this->id=0;
         
-		$this->group_id='';
-		$this->member_id='';
+		$this->ref='';
+		$this->entity='';
+		$this->label='';
+		$this->amount='';
+		$this->description='';
 		$this->date_creation='';
 		$this->tms='';
 		$this->user_creat='';
 		$this->user_modif='';
+		$this->import_key='';
+		$this->status='';
+		$this->project='';
+		$this->product='';
+		$this->supplier_invoice='';
+		$this->c_project_cost_type='';
+		$this->project_cost_spread='';
 
         
     }
@@ -429,11 +566,20 @@ class Projectcostspreadmember extends CommonObject
      */       
     function cleanParam(){
         
-		if (!empty($this->group_id)) $this->group_id=trim($this->group_id);
-		if (!empty($this->member_id)) $this->member_id=trim($this->member_id);
+		if (!empty($this->ref)) $this->ref=trim($this->ref);
+		if (!empty($this->label)) $this->label=trim($this->label);
+		if (!empty($this->amount)) $this->amount=trim($this->amount);
+		if (!empty($this->description)) $this->description=trim($this->description);
 		if (!empty($this->date_creation)) $this->date_creation=trim($this->date_creation);
 		if (!empty($this->user_creat)) $this->user_creat=trim($this->user_creat);
 		if (!empty($this->user_modif)) $this->user_modif=trim($this->user_modif);
+		if (!empty($this->import_key)) $this->import_key=trim($this->import_key);
+		if (!empty($this->status)) $this->status=trim($this->status);
+		if (!empty($this->project)) $this->project=trim($this->project);
+		if (!empty($this->product)) $this->product=trim($this->product);
+		if (!empty($this->supplier_invoice)) $this->supplier_invoice=trim($this->supplier_invoice);
+		if (!empty($this->c_project_cost_type)) $this->c_project_cost_type=trim($this->c_project_cost_type);
+		if (!empty($this->project_cost_spread)) $this->project_cost_spread=trim($this->project_cost_spread);
 
         
     }
@@ -446,9 +592,18 @@ class Projectcostspreadmember extends CommonObject
     function setSQLfields(){
         $sql='';
         
-		$sql.=' group_id='.(empty($this->group_id)!=0 ? 'null':"'".$this->group_id."'").',';
-		$sql.=' member_id='.(empty($this->member_id)!=0 ? 'null':"'".$this->member_id."'").',';
-		$sql.=' fk_user_modif="'.$user->id.'"';
+		$sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
+		$sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
+		$sql.=' amount='.(empty($this->amount)!=0 ? 'null':"'".$this->amount."'").',';
+		$sql.=' description='.(empty($this->description)!=0 ? 'null':"'".$this->db->escape($this->description)."'").',';
+		$sql.=' fk_user_modif="'.$user->id.'",';
+		$sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").',';
+		$sql.=' status='.(empty($this->status)!=0 ? 'null':"'".$this->status."'").',';
+		$sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
+		$sql.=' fk_product='.(empty($this->product)!=0 ? 'null':"'".$this->product."'").',';
+		$sql.=' fk_supplier_invoice='.(empty($this->supplier_invoice)!=0 ? 'null':"'".$this->supplier_invoice."'").',';
+		$sql.=' c_project_cost_type='.(empty($this->c_project_cost_type)!=0 ? 'null':"'".$this->c_project_cost_type."'").',';
+		$sql.=' fk_project_cost_spread='.(empty($this->project_cost_spread)!=0 ? 'null':"'".$this->project_cost_spread."'").'';
 
         
         return $sql;

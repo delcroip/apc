@@ -18,7 +18,7 @@
  */
 
 /**
- *   	\file       dev/skeletons/skeleton_page.php
+ *   	\file       dev/spreads/spread_page.php
  *		\ingroup    project_cost othermodule1 othermodule2
  *		\brief      This file is an example of a php page
  *					Initialy built by build_class_from_table on 2018-06-01 19:05

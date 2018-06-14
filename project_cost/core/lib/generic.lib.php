@@ -185,7 +185,7 @@ function select_sellist($sqlarray=array('table'=> 'user','keyfield'=> 'rowid','f
 
 function select_generic($table, $fieldValue,$htmlName,$fieldToShow1,$fieldToShow2='',$selected='',$separator=' - ',$sqlTailWhere='', $selectparam='', $addtionnalChoices=array('NULL'=>'NULL'),$sqlTailTable='', $ajaxNbChar=''){
     return select_sellist($sqlarray=array('table'=> $table,'keyfield'=> $fieldValue,'fields'=>$fieldToShow1.(empty($fieldToShow2)?'':','.$fieldToShow2), 'join' => '', 'where'=>$sqlTailWhere,'tail'=>$sqlTailTable),
-                        $htmlarray=array('name'=>$htmlName,'class'=>'','otherparam'=>$selectparam,'$ajaxNbChar'=>$ajaxNbChar,'separator'=> $separator),
+                        $htmlarray=array('name'=>$htmlName,'class'=>'','otherparam'=>$selectparam,'ajaxNbChar'=>$ajaxNbChar,'separator'=> $separator),
                         $selected,
                         $addtionnalChoices);
  }

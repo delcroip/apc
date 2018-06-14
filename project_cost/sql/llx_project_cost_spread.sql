@@ -32,6 +32,8 @@ CREATE TABLE llx_project_cost_spread(
 	c_sellist integer, 
 	fk_sellist_selected_id integer, 
 	isgroup boolean,
+        date_start datetime DEFAULT null,
+        date_end datetime DEFAULT NULL,
         fk_project integer --FIXME.
 	-- END MODULEBUILDER FIELDS
 ) ENGINE=innodb;

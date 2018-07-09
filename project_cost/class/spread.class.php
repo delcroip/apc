@@ -47,23 +47,24 @@ class Projectcostspread extends CommonObject
     public $id;
     // BEGIN OF automatic var creation
     
-	var $ref;
-	var $entity;
-	var $label;
-	var $ratio;
-	var $soc;
-	var $description;
-	var $date_creation='';
-	var $tms='';
-	var $user_creat;
-	var $user_modif;
-	var $import_key;
-	var $status;
-	var $c_sellist;
-	var $sellist_selected_id;
-	var $isgroup;
-        var $project;
-    
+	public $ref;
+	public $entity;
+	public $label;
+	public $ratio;
+	public $soc;
+	public $description;
+	public $date_creation='';
+	public $tms='';
+	public $user_creat;
+	public $user_modif;
+	public $import_key;
+	public $status;
+	public $c_sellist;
+	public $sellist_selected_id;
+	public $isgroup;
+        public $project;
+	public $date_start='';
+	public $date_end='';
     // END OF automatic var creation
 
 
@@ -111,8 +112,9 @@ class Projectcostspread extends CommonObject
 		$sql.= 'c_sellist,';
 		$sql.= 'fk_sellist_selected_id,';
 		$sql.= 'isgroup,';
-                $sql.= 'fk_project';
-
+                $sql.= 'fk_project,';
+		$sql.= 'date_start,';
+		$sql.= 'date_end';
         
         $sql.= ") VALUES (";
         
@@ -127,7 +129,9 @@ class Projectcostspread extends CommonObject
 		$sql.=' '.(empty($this->c_sellist)?'NULL':"'".$this->c_sellist."'").',';
 		$sql.=' '.(empty($this->sellist_selected_id)?'NULL':"'".$this->sellist_selected_id."'").',';
 		$sql.=' '.(empty($this->isgroup)?'0':"'".$this->isgroup."'").',';
-		$sql.=' '.(empty($this->project)?'0':"'".$this->project."'").'';
+		$sql.=' '.(empty($this->project)?'0':"'".$this->project."'").',';
+                $sql.=' '.(empty($this->date_start) || dol_strlen($this->date_start)==0?'NULL':"'".$this->db->idate($this->date_start)."'").',';
+		$sql.=' '.(empty($this->date_end) || dol_strlen($this->date_end)==0?'NULL':"'".$this->db->idate($this->date_end)."'").'';
         
         $sql.= ")";
 
@@ -200,7 +204,9 @@ class Projectcostspread extends CommonObject
         $sql.=' t.c_sellist,';
         $sql.=' t.fk_sellist_selected_id,';
         $sql.=' t.isgroup,';
-        $sql.=' t.fk_project';
+        $sql.=' t.fk_project,';
+        $sql.=' t.date_start,';
+        $sql.=' t.date_end';
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
         if ($ref) $sql.= " WHERE t.ref = '".$ref."'";
         else $sql.= " WHERE t.rowid = ".$id;
@@ -229,6 +235,8 @@ class Projectcostspread extends CommonObject
                 $this->sellist_selected_id = $obj->fk_sellist_selected_id;
                 $this->isgroup = $obj->isgroup;
                 $this->project = $obj->fk_project;
+                $this->date_start = $this->db->jdate($obj->date_start);
+                $this->date_end = $this->db->jdate($obj->date_end);
                 
             }
             $this->db->free($resql);
@@ -556,7 +564,9 @@ class Projectcostspread extends CommonObject
         $this->c_sellist='';
         $this->sellist_selected_id='';
         $this->isgroup='';
-
+        $this->project='';
+        $this->date_start='';
+        $this->date_end='';
         
     }
     /**
@@ -581,6 +591,8 @@ class Projectcostspread extends CommonObject
         if (!empty($this->sellist_selected_id)) $this->sellist_selected_id=trim($this->sellist_selected_id);
         if (!empty($this->isgroup)) $this->isgroup=trim($this->isgroup);
         if (!empty($this->project)) $this->project=trim($this->project);
+        if (!empty($this->date_start)) $this->date_start=trim($this->date_start);
+        if (!empty($this->date_end)) $this->date_end=trim($this->date_end);
 
     }
      /**
@@ -603,8 +615,9 @@ class Projectcostspread extends CommonObject
         $sql.=' c_sellist='.(empty($this->c_sellist)? 'null':"'".$this->c_sellist."'").',';
         $sql.=' fk_sellist_selected_id='.(empty($this->sellist_selected_id)? 'null':"'".$this->sellist_selected_id."'").',';
         $sql.=' isgroup='.(empty($this->isgroup)? 'null':"'".$this->isgroup."'").',';
-        $sql.=' fk_project='.(empty($this->project)? 'null':"'".$this->project."'").'';
-
+        $sql.=' fk_project='.(empty($this->project)? 'null':"'".$this->project."'").',';
+        $sql.=' date_start='.(dol_strlen($this->date_start)!=0 ? "'".$this->db->idate($this->date_start)."'":'null').',';
+        $sql.=' date_end='.(dol_strlen($this->date_end)!=0 ? "'".$this->db->idate($this->date_end)."'":'null').'';
         
         return $sql;
     }

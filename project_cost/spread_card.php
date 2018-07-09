@@ -144,20 +144,21 @@ if ($cancel){
             $action=($action=='add')?'create':'view';
     }
     //retrive the data
-    		$object->ref=GETPOST('Ref');
-		$object->label=GETPOST('Label');
-		$object->ratio=GETPOST('Ratio');
-		$object->soc=GETPOST('Soc');
-		$object->description=GETPOST('Description');
-		$object->user_creat=GETPOST('Usercreat');
-		$object->import_key=GETPOST('Importkey');
-		$object->status=GETPOST('Status');
-		$object->c_sellist=GETPOST('Csellist');
-		$object->sellist_selected_id=GETPOST('Sellistselectedid');
-		$object->isgroup=GETPOST('Isgroup');
-                $object->project=$projectid;
+    $object->ref=GETPOST('Ref');
+    $object->label=GETPOST('Label');
+    $object->ratio=GETPOST('Ratio');
+    $object->soc=GETPOST('Soc');
+    $object->description=GETPOST('Description');
+    $object->user_creat=GETPOST('Usercreat');
+    $object->import_key=GETPOST('Importkey');
+    $object->status=GETPOST('Status');
+    $object->c_sellist=GETPOST('Csellist');
+    $object->sellist_selected_id=GETPOST('Sellistselectedid');
+    $object->isgroup=GETPOST('Isgroup');
+    $object->project=$projectid;
+    $object->date_start=dol_mktime(0, 0, 0,GETPOST('Datestartmonth'),GETPOST('Datestartday'),GETPOST('Datestartyear'));
+    $object->date_end=dol_mktime(0, 0, 0,GETPOST('Dateendmonth'),GETPOST('Dateendday'),GETPOST('Dateendyear'));
 
-    
 
 // test here if the post data is valide
  /*
@@ -458,6 +459,36 @@ if($conf->global->PROJECT_COST_ATTACHED_ITEM){
 			print '<input type="checkbox" value="1" name="Isgroup" '.($object->isgroup?'checked':'').'>';
 		}else{
 			print '<input type="checkbox" name="Isgroup" disabled '.($object->isgroup?'checked':'').' >';
+		}
+		print "</td>";
+		print "\n</tr>\n";
+// show the field date_start
+
+		print '<td>'.$langs->trans('Datestart').' </td><td>';
+		if($edit==1){
+		if($new==1){
+			print $form->select_date(-1,'Datestart');
+		}else{
+			print $form->select_date($object->date_start,'Datestart');
+		}
+		}else{
+			print dol_print_date($object->date_start,'day');
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+
+// show the field date_end
+
+		print '<td>'.$langs->trans('Dateend').' </td><td>';
+		if($edit==1){
+		if($new==1){
+			print $form->select_date(-1,'Dateend');
+		}else{
+			print $form->select_date($object->date_end,'Dateend');
+		}
+		}else{
+			print dol_print_date($object->date_end,'day');
 		}
 		print "</td>";
 		print "\n</tr>\n";

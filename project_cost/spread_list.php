@@ -432,7 +432,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 
     print '</table>'."\n";
     print '</div>'."\n"; // div-table-responsive
-    print '<a href="spread_card.php?action=create" class="butAction" role="button">'.$langs->trans('New');
+    print '<a href="spread_card.php?action=create&Projectid='.$projectid.'" class="butAction" role="button">'.$langs->trans('New');
     print ' '.$langs->trans('Projectcostspread')."</a>\n";
     print '</form>'."\n";
     // new button

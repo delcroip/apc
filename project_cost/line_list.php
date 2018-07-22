@@ -80,6 +80,7 @@ if (!$removefilter )		// Both test must be present to be compatible with all bro
     	$ls_ref= GETPOST('ls_ref','alpha');
 	$ls_label= GETPOST('ls_label','alpha');
 	$ls_amount= GETPOST('ls_amount','int');
+	$ls_vat_amount= GETPOST('ls_vat_amount','int');
 	$ls_description= GETPOST('ls_description','alpha');
 	$ls_import_key= GETPOST('ls_import_key','alpha');
 	$ls_status= GETPOST('ls_status','int');
@@ -188,7 +189,7 @@ llxHeader('','Projectcostline','');
         $project= new Project($db);
         $project->fetch($projectid);
         $headProject=project_prepare_head($project);
-         dol_fiche_head($headProject, 'stakeholders', $langs->trans("Project"), 0, 'project');
+         dol_fiche_head($headProject, 'costs', $langs->trans("Project"), 0, 'project');
 
 print "<div> <!-- module body-->";
 $form=new Form($db);
@@ -218,6 +219,7 @@ jQuery(document).ready(function() {
 		$sql.=' t.ref,';
 		$sql.=' t.label,';
 		$sql.=' t.amount,';
+		$sql.=' t.vat_amount,';
 		$sql.=' t.description,';
 		$sql.=' t.import_key,';
 		$sql.=' t.status,';
@@ -245,6 +247,7 @@ jQuery(document).ready(function() {
     	if($ls_ref) $sqlwhere .= natural_search('t.ref', $ls_ref);
 	if($ls_label) $sqlwhere .= natural_search('t.label', $ls_label);
 	if($ls_amount) $sqlwhere .= natural_search(array('t.amount'), $ls_amount);
+	if($ls_vat_amount) $sqlwhere .= natural_search(array('t.vat_amount'), $ls_vat_amount);
 	if($ls_description) $sqlwhere .= natural_search('t.description', $ls_description);
 	if($ls_import_key) $sqlwhere .= natural_search('t.import_key', $ls_import_key);
 	if($ls_status) $sqlwhere .= natural_search(array('t.status'), $ls_status);
@@ -257,7 +260,7 @@ jQuery(document).ready(function() {
     
     //list limit
     if(!empty($sqlwhere))
-        $sql.=' WHERE '.substr ($sqlwhere, 5);
+        $sql.=' WHERE fk_project='.$projectid.$sqlwhere;
     
 // Count total nb of records
 $nbtotalofrecords = 0;
@@ -265,7 +268,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 {
         $sqlcount='SELECT COUNT(*) as count FROM '.MAIN_DB_PREFIX.'project_cost_line as t';
         if(!empty($sqlwhere))
-            $sqlcount.=' WHERE '.substr ($sqlwhere, 5);
+            $sqlcount.=' WHERE fk_project='.$projectid.$sqlwhere;
 	$result = $db->query($sqlcount);
         $nbtotalofrecords = ($result)?$objcount = $db->fetch_object($result)->count:0;
 }
@@ -289,6 +292,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         	if (!empty($ls_ref))	$param.='&ls_ref='.urlencode($ls_ref);
 	if (!empty($ls_label))	$param.='&ls_label='.urlencode($ls_label);
 	if (!empty($ls_amount))	$param.='&ls_amount='.urlencode($ls_amount);
+	if (!empty($ls_vat_amount))	$param.='&ls_vat_amount='.urlencode($ls_vat_amount);
 	if (!empty($ls_description))	$param.='&ls_description='.urlencode($ls_description);
 	if (!empty($ls_import_key))	$param.='&ls_import_key='.urlencode($ls_import_key);
 	if (!empty($ls_status))	$param.='&ls_status='.urlencode($ls_status);
@@ -315,6 +319,8 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 	print_liste_field_titre($langs->trans('Label'),$PHP_SELF,'t.label','',$param,'',$sortfield,$sortorder);
 	print "\n";
 	print_liste_field_titre($langs->trans('Amount'),$PHP_SELF,'t.amount','',$param,'',$sortfield,$sortorder);
+	print "\n";
+	print_liste_field_titre($langs->trans('Vat_mount'),$PHP_SELF,'t.vat_amount','',$param,'',$sortfield,$sortorder);
 	print "\n";
 	print_liste_field_titre($langs->trans('Description'),$PHP_SELF,'t.description','',$param,'',$sortfield,$sortorder);
 	print "\n";
@@ -345,6 +351,10 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 	print '<td class="liste_titre" colspan="1" >';
 	print '<input class="flat" size="16" type="text" name="ls_amount" value="'.$ls_amount.'">';
 	print '</td>';
+//Search field for vat_amount
+	print '<td class="liste_titre" colspan="1" >';
+	print '<input class="flat" size="16" type="text" name="ls_vat_amount" value="'.$ls_vat_amount.'">';
+	print '</td>';
 //Search field fordescription
 	print '<td class="liste_titre" colspan="1" >';
 	print '<input class="flat" size="16" type="text" name="ls_description" value="'.$ls_description.'">';
@@ -358,8 +368,8 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 
 //Search field forproduct
 	print '<td class="liste_titre" colspan="1" >';
-		$sql_product=array('table'=> 'product','keyfield'=> rowid,'fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
-		$html_product=array('name'=>'$ls_product','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+		$sql_product=array('table'=> 'product','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		$html_product=array('name'=>'ls_product','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
 		$addChoicesproduct=null;		
                 print select_sellist($sql_product,$html_product, $ls_product,$addChoices_product );
 	print '</td>';
@@ -395,7 +405,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         print '</td>';
         print '</tr>'."\n"; 
         $i=0;
-        $basedurl=dirname($PHP_SELF).'/line_card.php?action=view&id=';
+        $basedurl=dirname($PHP_SELF).'/line_card.php?action=view&Projectid='.$projectid.'&id=';
         while ($i < $num && $i<$limit)
         {
             $obj = $db->fetch_object($resql);
@@ -407,14 +417,29 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 		print "<td>".$object->getNomUrl($obj->ref,'',$obj->ref,0)."</td>";
 		print "<td>".$obj->label."</td>";
 		print "<td>".$obj->amount."</td>";
+		print "<td>".$obj->vat_amount."</td>";
 		print "<td>".$obj->description."</td>";
 
 		print "<td>".$obj->status."</td>";
-		print "<td>".print_generic('product','rowid',$obj->fk_product,'ref','label')."</td>";
-		print "<td>".print_generic('facture_fourn','rowid',$obj->fk_supplier_invoice,'ref','label')."</td>";
-		print "<td>".$obj->c_project_cost_type."</td>";
-		print "<td>".print_generic('project_cost_spread','rowid',$obj->fk_project_cost_spread,'rowid','description')."</td>";
-		print '<td><a href="line_card.php?action=delete&id='.$obj->rowid.'">'.img_delete().'</a></td>';
+		$sql_product=array('table'=> 'product','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+                print "<td>";
+		print_sellist($sql_product,$object->product,'-');
+                print "</td>";
+                print "<td>";
+		$sql_supplier_invoice=array('table'=> 'facture_fourn','keyfield'=> 'rowid','fields'=>'ref,libelle', 'join' => '', 'where'=>'','tail'=>'');
+		print_sellist($sql_supplier_invoice,$object->supplier_invoice,"-" );
+                print "</td>";
+                print "<td>";
+
+                $sql_type=array('table'=> 'c_project_cost_type','keyfield'=> 'rowid','fields'=>'label', 'join' => '', 'where'=>'','tail'=>'');
+		print_sellist($sql_type,$object->c_project_cost_type,'-');
+                print "</td>";
+                print "<td>";	
+//$sql_project_cost_spread=array('table'=> 'project_cost_spread','keyfield'=> 'rowid','fields'=>'(CASE isgroup WHEN 1 THEN "'.$langs->trans("Group").'" ELSE "'.$langs->trans("Single").'" END) as group,ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		$sql_project_cost_spread=array('table'=> 'project_cost_spread','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		print_sellist($sql_project_cost_spread,$object->project_cost_spread,'-');
+                 print "</td>";
+                print '<td><a href="line_card.php?action=delete&id='.$obj->rowid.'">'.img_delete().'</a></td>';
 		print "</tr>";
 
                 
@@ -432,7 +457,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     print '</table>'."\n";
     print '</form>'."\n";
     // new button
-    print '<a href="line_card.php?action=create" class="butAction" role="button">'.$langs->trans('New');
+    print '<a href="line_card.php?action=create&Projectid='.$projectid.'" class="butAction" role="button">'.$langs->trans('New');
     print ' '.$langs->trans('Projectcostline')."</a>\n";
 
     

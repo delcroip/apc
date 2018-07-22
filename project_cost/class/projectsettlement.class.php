@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2007-2012 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2014	   Juanjo Menent		<jmenent@2byte.es>
+ * Copyright (C) 2018	   Patrick DELCROIX     <pmpdelcroix@gmail.com>
  * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +19,10 @@
  */
 
 /**
- *  \file       dev/projectcostlines/projectcostline.class.php
+ *  \file       dev/projectsettlements/projectsettlement.class.php
  *  \ingroup    project_cost othermodule1 othermodule2
  *  \brief      This file is an example for a CRUD class file (Create/Read/Update/Delete)
- *				Initialy built by build_class_from_table on 2018-06-11 21:10
+ *				Initialy built by build_class_from_table on 2018-07-21 21:29
  */
 
 // Put here all includes required by your class file
@@ -33,16 +34,16 @@ require_once(DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php");
 /**
  *	Put here description of your class
  */
-class Projectcostline extends CommonObject
+class Projectsettlement extends CommonObject
 {
     /**
      * @var string ID to identify managed object
      */				//!< To return several error codes (or messages)
-    public $element='projectcostline';			//!< Id that identify managed objects
+    public $element='projectsettlement';			//!< Id that identify managed objects
     /**
      * @var string Name of table without prefix where object is stored
      */    
-    public $table_element='project_cost_line';		//!< Name of table without prefix where object is stored
+    public $table_element='project_settlement';		//!< Name of table without prefix where object is stored
 
     public $id;
     // BEGIN OF automatic var creation
@@ -50,20 +51,15 @@ class Projectcostline extends CommonObject
 	public $ref;
 	public $entity;
 	public $label;
-	public $amount;
-	public $vat_amount;
+	public $project;
 	public $description;
+	public $date_settlement='';
 	public $date_creation='';
-	public $tms='';
+	public $date_modification='';
 	public $user_creat;
 	public $user_modif;
 	public $import_key;
 	public $status;
-	public $project;
-	public $product;
-	public $supplier_invoice;
-	public $c_project_cost_type;
-	public $project_cost_spread;
 
     
     // END OF automatic var creation
@@ -104,36 +100,26 @@ class Projectcostline extends CommonObject
         
 		$sql.= 'ref,';
 		$sql.= 'label,';
-		$sql.= 'amount,';
-		$sql.= 'vat_amount,';
+		$sql.= 'fk_project,';
 		$sql.= 'description,';
+		$sql.= 'date_settlement,';
 		$sql.= 'date_creation,';
 		$sql.= 'fk_user_creat,';
 		$sql.= 'import_key,';
-		$sql.= 'status,';
-		$sql.= 'fk_project,';
-		$sql.= 'fk_product,';
-		$sql.= 'fk_supplier_invoice,';
-		$sql.= 'c_project_cost_type,';
-		$sql.= 'fk_project_cost_spread';
+		$sql.= 'status';
 
         
         $sql.= ") VALUES (";
         
 		$sql.=' '.(empty($this->ref)?'NULL':"'".$this->db->escape($this->ref)."'").',';
 		$sql.=' '.(empty($this->label)?'NULL':"'".$this->db->escape($this->label)."'").',';
-		$sql.=' '.(empty($this->amount)?'NULL':"'".$this->amount."'").',';
-		$sql.=' '.(empty($this->vat_amount)?'NULL':"'".$this->vat_amount."'").',';
+		$sql.=' '.(empty($this->project)?'NULL':"'".$this->project."'").',';
 		$sql.=' '.(empty($this->description)?'NULL':"'".$this->db->escape($this->description)."'").',';
+		$sql.=' '.(empty($this->date_settlement) || dol_strlen($this->date_settlement)==0?'NULL':"'".$this->db->idate($this->date_settlement)."'").',';
 		$sql.=' NOW() ,';
 		$sql.=' "'.$user->id.'",';
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").',';
-		$sql.=' '.(empty($this->status)?'NULL':"'".$this->status."'").',';
-		$sql.=' '.(empty($this->project)?'NULL':"'".$this->project."'").',';
-		$sql.=' '.(empty($this->product)?'NULL':"'".$this->product."'").',';
-		$sql.=' '.(empty($this->supplier_invoice)?'NULL':"'".$this->supplier_invoice."'").',';
-		$sql.=' '.(empty($this->c_project_cost_type)?'NULL':"'".$this->c_project_cost_type."'").',';
-		$sql.=' '.(empty($this->project_cost_spread)?'NULL':"'".$this->project_cost_spread."'").'';
+		$sql.=' '.(empty($this->status)?'NULL':"'".$this->status."'").'';
 
         
         $sql.= ")";
@@ -195,20 +181,15 @@ class Projectcostline extends CommonObject
 		$sql.=' t.ref,';
 		$sql.=' t.entity,';
 		$sql.=' t.label,';
-		$sql.=' t.amount,';
-		$sql.=' t.vat_amount,';
+		$sql.=' t.fk_project,';
 		$sql.=' t.description,';
+		$sql.=' t.date_settlement,';
 		$sql.=' t.date_creation,';
-		$sql.=' t.tms,';
+		$sql.=' t.date_modification,';
 		$sql.=' t.fk_user_creat,';
 		$sql.=' t.fk_user_modif,';
 		$sql.=' t.import_key,';
-		$sql.=' t.status,';
-		$sql.=' t.fk_project,';
-		$sql.=' t.fk_product,';
-		$sql.=' t.fk_supplier_invoice,';
-		$sql.=' t.c_project_cost_type,';
-		$sql.=' t.fk_project_cost_spread';
+		$sql.=' t.status';
 
         
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
@@ -223,23 +204,18 @@ class Projectcostline extends CommonObject
                 $obj = $this->db->fetch_object($resql);
                 $this->id    = $obj->rowid;
                 
-                $this->ref = $obj->ref;
-                $this->entity = $obj->entity;
-                $this->label = $obj->label;
-                $this->amount = $obj->amount;
-                $this->vat_amount = $obj->vat_amount;
-                $this->description = $obj->description;
-                $this->date_creation = $this->db->jdate($obj->date_creation);
-                $this->tms = $this->db->jdate($obj->tms);
-                $this->user_creat = $obj->fk_user_creat;
-                $this->user_modif = $obj->fk_user_modif;
-                $this->import_key = $obj->import_key;
-                $this->status = $obj->status;
-                $this->project = $obj->fk_project;
-                $this->product = $obj->fk_product;
-                $this->supplier_invoice = $obj->fk_supplier_invoice;
-                $this->c_project_cost_type = $obj->c_project_cost_type;
-                $this->project_cost_spread = $obj->fk_project_cost_spread;
+				$this->ref = $obj->ref;
+				$this->entity = $obj->entity;
+				$this->label = $obj->label;
+				$this->project = $obj->fk_project;
+				$this->description = $obj->description;
+				$this->date_settlement = $this->db->jdate($obj->date_settlement);
+				$this->date_creation = $this->db->jdate($obj->date_creation);
+				$this->date_modification = $this->db->jdate($obj->date_modification);
+				$this->user_creat = $obj->fk_user_creat;
+				$this->user_modif = $obj->fk_user_modif;
+				$this->import_key = $obj->import_key;
+				$this->status = $obj->status;
 
                 
             }
@@ -348,9 +324,9 @@ class Projectcostline extends CommonObject
         }else $linkclose = ($morecss?' class="'.$morecss.'"':'');
         
         if($id){
-            $lien = '<a href="'.dol_buildpath('/project_cost/line_card.php',1).'id='.$id.'&Projectid='.$this->project.'&action=view"'.$linkclose.'>';
+            $lien = '<a href="'.dol_buildpath('/project_cost/settlement_card.php',1).'id='.$id.'&Projectid='.$this->project.'&action=view"'.$linkclose.'>';
         }else if (!empty($ref)){
-            $lien = '<a href="'.dol_buildpath('/project_cost/line_card.php',1).'?ref='.$ref.'&Projectid='.$this->project.'&action=view"'.$linkclose.'>';
+            $lien = '<a href="'.dol_buildpath('/project_cost/settlement_card.php',1).'?ref='.$ref.'&Projectid='.$this->project.'&action=view"'.$linkclose.'>';
         }else{
             $lien =  "";
         }
@@ -501,7 +477,7 @@ class Projectcostline extends CommonObject
     {
         global $user,$langs;
         $error=0;
-        $object=new Projectcostline($this->db);
+        $object=new Projectsettlement($this->db);
         $this->db->begin();
         // Load source object
         $object->fetch($fromid);
@@ -547,20 +523,15 @@ class Projectcostline extends CommonObject
 		$this->ref='';
 		$this->entity='';
 		$this->label='';
-		$this->amount='';
-		$this->vat_amount='';
+		$this->project='';
 		$this->description='';
+		$this->date_settlement='';
 		$this->date_creation='';
-		$this->tms='';
+		$this->date_modification='';
 		$this->user_creat='';
 		$this->user_modif='';
 		$this->import_key='';
 		$this->status='';
-		$this->project='';
-		$this->product='';
-		$this->supplier_invoice='';
-		$this->c_project_cost_type='';
-		$this->project_cost_spread='';
 
         
     }
@@ -572,21 +543,17 @@ class Projectcostline extends CommonObject
      */       
     function cleanParam(){
         
-        if (!empty($this->ref)) $this->ref=trim($this->ref);
-        if (!empty($this->label)) $this->label=trim($this->label);
-        if (!empty($this->amount)) $this->amount=trim($this->amount);
-        if (!empty($this->vat_amount)) $this->vat_amount=trim($this->vat_amount);
-        if (!empty($this->description)) $this->description=trim($this->description);
-        if (!empty($this->date_creation)) $this->date_creation=trim($this->date_creation);
-        if (!empty($this->user_creat)) $this->user_creat=trim($this->user_creat);
-        if (!empty($this->user_modif)) $this->user_modif=trim($this->user_modif);
-        if (!empty($this->import_key)) $this->import_key=trim($this->import_key);
-        if (!empty($this->status)) $this->status=trim($this->status);
-        if (!empty($this->project)) $this->project=trim($this->project);
-        if (!empty($this->product)) $this->product=trim($this->product);
-        if (!empty($this->supplier_invoice)) $this->supplier_invoice=trim($this->supplier_invoice);
-        if (!empty($this->c_project_cost_type)) $this->c_project_cost_type=trim($this->c_project_cost_type);
-        if (!empty($this->project_cost_spread)) $this->project_cost_spread=trim($this->project_cost_spread);
+		if (!empty($this->ref)) $this->ref=trim($this->ref);
+		if (!empty($this->label)) $this->label=trim($this->label);
+		if (!empty($this->project)) $this->project=trim($this->project);
+		if (!empty($this->description)) $this->description=trim($this->description);
+		if (!empty($this->date_settlement)) $this->date_settlement=trim($this->date_settlement);
+		if (!empty($this->date_creation)) $this->date_creation=trim($this->date_creation);
+		if (!empty($this->date_modification)) $this->date_modification=trim($this->date_modification);
+		if (!empty($this->user_creat)) $this->user_creat=trim($this->user_creat);
+		if (!empty($this->user_modif)) $this->user_modif=trim($this->user_modif);
+		if (!empty($this->import_key)) $this->import_key=trim($this->import_key);
+		if (!empty($this->status)) $this->status=trim($this->status);
 
         
     }
@@ -601,17 +568,13 @@ class Projectcostline extends CommonObject
         
 		$sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
 		$sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
-		$sql.=' amount='.(empty($this->amount)!=0 ? 'null':"'".$this->amount."'").',';
-		$sql.=' vat_amount='.(empty($this->vat_amount)!=0 ? 'null':"'".$this->vat_amount."'").',';
+		$sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
 		$sql.=' description='.(empty($this->description)!=0 ? 'null':"'".$this->db->escape($this->description)."'").',';
+		$sql.=' date_settlement='.(dol_strlen($this->date_settlement)!=0 ? "'".$this->db->idate($this->date_settlement)."'":'null').',';
+		$sql.=' date_modification=NOW() ,';
 		$sql.=' fk_user_modif="'.$user->id.'",';
 		$sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").',';
-		$sql.=' status='.(empty($this->status)!=0 ? 'null':"'".$this->status."'").',';
-		$sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
-		$sql.=' fk_product='.(empty($this->product)!=0 ? 'null':"'".$this->product."'").',';
-		$sql.=' fk_supplier_invoice='.(empty($this->supplier_invoice)!=0 ? 'null':"'".$this->supplier_invoice."'").',';
-		$sql.=' c_project_cost_type='.(empty($this->c_project_cost_type)!=0 ? 'null':"'".$this->c_project_cost_type."'").',';
-		$sql.=' fk_project_cost_spread='.(empty($this->project_cost_spread)!=0 ? 'null':"'".$this->project_cost_spread."'").'';
+		$sql.=' status='.(empty($this->status)!=0 ? 'null':"'".$this->status."'").'';
 
         
         return $sql;

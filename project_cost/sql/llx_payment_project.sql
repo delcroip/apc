@@ -14,25 +14,21 @@
 -- along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-CREATE TABLE llx_project_cost_line(
-	-- BEGIN MODULEBUILDER FIELDS
+CREATE TABLE llx_payment_project(
 	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
-	ref varchar(128) NOT NULL, 
-	entity integer DEFAULT 1 NOT NULL, 
+	ref varchar(50) NOT NULL,
+        entity integer DEFAULT 1 NOT NULL, 
 	label varchar(255), 
-	amount double(24,8), 
-        vat_amount double(24,8),
-	description text, 
+	amount double(24,8),
+        datep           date NOT NULL,               -- date de paiement
+        datev           date,                       -- date de valeur (this field should not be here, only into bank tables) 
+        fk_project integer NOT NULL,
+        fk_soc  integer NOT NULL,
+        fk_typepayment  integer NOT NULL,
+        fk_bank         integer,  
 	date_creation datetime NOT NULL, 
-	tms timestamp NOT NULL, 
+	date_modification timestamp NOT NULL, 
 	fk_user_creat integer NOT NULL, 
 	fk_user_modif integer, 
-	import_key varchar(14), 
-	status integer NOT NULL, 
-	fk_project integer NOT NULL, 
-	fk_product integer, 
-	fk_supplier_invoice integer, 
-	c_project_cost_type integer not null, 
-	fk_project_cost_spread integer not null
-	-- END MODULEBUILDER FIELDS
+	import_key varchar(14) 
 ) ENGINE=innodb;

@@ -131,18 +131,26 @@ if($id>0)
     $object->id=$id; 
     $object->fetch($id);
     $ref=dol_sanitizeFileName($object->ref);
+    if(empty($action))$action='view'; //  the doc handling part send back only the ID without actions
     if($projectid<1){
         $projectid=$object->project;
-    }}
-if(!empty($ref))
+    }
+}else if(!empty($ref))
 {
     $object->ref=$ref; 
     $object->id=$id; 
     $object->fetch($id);
     $ref=dol_sanitizeFileName($object->ref);
-    $upload_dir = $conf->project_cost->dir_output.'/'.get_exdir($object->id,2,0,0,$object,'Projectcostline').$ref;
-    
+        if($projectid<1){
+        $projectid=$object->project;
+    }
+
+}else if (empty($projectid)){
+    setEventMessage( $langs->trans('noProjectIdPresent').' id:'.$id,'errors');
 }
+
+    //$upload_dir = $conf->project_cost->dir_output.'/'.get_exdir($object->id,2,0,0,$object,'Projectcostline').$ref;
+    
 
 
 /*******************************************************************
@@ -154,7 +162,7 @@ if(!empty($ref))
 // Action to add record
 $error=0;
 if ($cancel){
-        ProjectcostlineReloadPage($backtopage,$id,$ref);
+        ProjectcostlineReloadPage($backtopage,$projectid,$id,$ref);
 }else if (($action == 'add') || ($action == 'update' && ($id>0 || !empty($ref))))
 {
     //block resubmit
@@ -163,18 +171,21 @@ if ($cancel){
             $action=($action=='add')?'create':'view';
     }
     //retrive the data
-    		$object->ref=GETPOST('Ref');
-		$object->label=GETPOST('Label');
-		$object->amount=GETPOST('Amount');
-		$object->description=GETPOST('Description');
-		$object->import_key=GETPOST('Importkey');
-		$object->status=GETPOST('Status');
-		$object->project=GETPOST('Project');
-		$object->product=GETPOST('Product');
-		$object->supplier_invoice=GETPOST('Supplierinvoice');
-		$object->c_project_cost_type=GETPOST('Cprojectcosttype');
-		$object->project_cost_spread=GETPOST('Projectcostspread');
+    $object->ref=GETPOST('Ref');
+    $object->label=GETPOST('Label');
+    $object->amount=GETPOST('Amount');
+    $object->vat_amount=GETPOST('Vat_amount');
+    $object->description=GETPOST('Description');
 
+    $object->status=GETPOST('Status');
+    $object->project=GETPOST('Projectid');
+    $object->product=GETPOST('Product');
+    $object->supplier_invoice=GETPOST('Supplierinvoice');
+    $object->c_project_cost_type=GETPOST('Cprojectcosttype');
+    $object->project_cost_spread=GETPOST('Projectcostspread');
+    if($object->product<0)$object->product=null;
+    if($object->supplier_invoice<0)$object->supplier_invoice=null;
+    if($object->project_cost_spread<0)$object->project_cost_spread=null;
     
 
 // test here if the post data is valide
@@ -243,7 +254,7 @@ if ($cancel){
             // remove the tms
                unset($_SESSION['Projectcostline_'.$tms]);
                setEventMessage('RecordSucessfullyCreated', 'mesgs');
-               ProjectcostlineReloadPage($backtopage,$result,'');
+               ProjectcostlineReloadPage($backtopage,$projectid,$result,'');
 
         }else
         {
@@ -267,21 +278,21 @@ if ($cancel){
                 if (! empty($object->errors)) setEventMessages(null,$object->errors,'errors');
                 else setEventMessage('RecordNotDeleted','errors');
             }
-            ProjectcostlineReloadPage($backtopage, 0, '');
+            ProjectcostlineReloadPage($backtopage,$projectid, 0, '');
          break;
 
 
           
  }             
 //Removing the tms array so the order can't be submitted two times
-if(isset( $_SESSION['line_'.$tms]))
+if(isset( $_SESSION['Projectcostline_'.$tms]))
 {
-    unset($_SESSION['line_'.$tms]);
+    unset($_SESSION['Projectcostline_'.$tms]);
 }
 if(($action == 'create') || ($action == 'edit' && ($id>0 || !empty($ref)))){
     $tms=getToken();
-    $_SESSION['line_'.$tms]=array();
-    $_SESSION['line_'.$tms]['action']=$action;
+    $_SESSION['Projectcostline_'.$tms]=array();
+    $_SESSION['Projectcostline_'.$tms]['action']=$action;
             
 }
 
@@ -330,7 +341,7 @@ switch ($action) {
         $project= new Project($db);
         $project->fetch($projectid);
         $headProject=project_prepare_head($project);
-         dol_fiche_head($headProject, 'stakeholders', $langs->trans("Project"), 0, 'project');
+        dol_fiche_head($headProject, 'costs', $langs->trans("Project"), 0, 'project');
         // tabs
         if($edit==0 && $new==0){ //show tabs
             $head=ProjectcostlinePrepareHead($object);
@@ -342,16 +353,16 @@ switch ($action) {
 	print '<br>';
         if($edit==1){
             if($new==1){
-                print '<form method="POST" action="'.$PHP_SELF.'?action=add">';
+                print '<form method="POST" action="'.$PHP_SELF.'?action=add&Projectid='.$projectid.'">';
             }else{
-                print '<form method="POST" action="'.$PHP_SELF.'?action=update&id='.$id.'">';
+                print '<form method="POST" action="'.$PHP_SELF.'?action=update&Projectid='.$projectid.'&id='.$id.'">';
             }
                         
             print '<input type="hidden" name="tms" value="'.$tms.'">';
             print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
-
+    //        print '<input type="hidden" name="Projectid" value="'.$projectid.'">';
         }else {// show the nav bar
-            $basedurl=dirname($PHP_SELF).'/line_list.php';
+            $basedurl=dol_buildpath("/project_cost/line_list.php", 1).'/line_list.php'.'?Projectid='.$projectid;;
             $linkback = '<a href="'.$basedurl.(! empty($socid)?'?socid='.$socid:'').'">'.$langs->trans("BackToList").'</a>';
             if(!isset($object->ref))//save ref if any
                 $object->ref=$object->id;
@@ -388,6 +399,34 @@ switch ($action) {
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
+// show the field c_project_cost_type
+
+		print '<td class="fieldrequired">'.$langs->trans('Cprojectcosttype').' </td><td>';
+		$sql_type=array('table'=> 'c_project_cost_type','keyfield'=> 'rowid','fields'=>'label', 'join' => '', 'where'=>'active=1','tail'=>'');
+		$html_type=array('name'=>'Cprojectcosttype','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+		$addChoices_type=null;
+		if($edit==1){
+		print select_sellist($sql_type,$html_type, $object->c_project_cost_type,$addChoices_type );
+		}else{
+		print_sellist($sql_type,$object->c_project_cost_type,'-');		
+                }
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+
+// show the field project_cost_spread
+
+		print '<td class="fieldrequired">'.$langs->trans('Projectcostspread').' </td><td>';
+		$sql_project_cost_spread=array('table'=> 'project_cost_spread','keyfield'=> rowid,'fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		$html_project_cost_spread=array('name'=>'Projectcostspread','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+		$addChoicesproject_cost_spread=null;
+		if($edit==1){
+		print select_sellist($sql_project_cost_spread,$html_project_cost_spread, $object->project_cost_spread,$addChoices_project_cost_spread );
+		}else{
+		print_sellist($sql_project_cost_spread,$object->project_cost_spread,'-');		}
+		print "</td>";
+		print "\n</tr>\n";                           
+		print "<tr>\n";
 
 // show the field amount
 
@@ -400,7 +439,31 @@ switch ($action) {
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
+// show the field vat_amount
 
+		print '<td>'.$langs->trans('Vat_amount').' </td><td>';
+		if($edit==1){
+			print '<input type="text" value="'.$object->vat_amount.'" name="Vat_amount">';
+		}else{
+			print $object->vat_amount;
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+// show the field status
+
+		print '<td class="fieldrequired">'.$langs->trans('Status').' </td><td>';
+		
+                if($edit==1){
+                    global $arrayStatus;
+			print $form->selectarray('Status',$arrayStatus,$object->status);
+                 }else{
+			print $object->getLibStatut(4);
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+                
 // show the field description
 
 		print '<td>'.$langs->trans('Description').' </td><td>';
@@ -413,50 +476,36 @@ switch ($action) {
 		print "\n</tr>\n";
 		print "<tr>\n";
 
-// show the field import_key
 
-		print '<td>'.$langs->trans('Importkey').' </td><td>';
-		if($edit==1){
-			print '<input type="text" value="'.$object->import_key.'" name="Importkey">';
-		}else{
-			print $object->import_key;
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
 
-// show the field status
-
-		print '<td class="fieldrequired">'.$langs->trans('Status').' </td><td>';
-		if($edit==1){
-			print '<input type="text" value="'.$object->status.'" name="Status">';
-		}else{
-			print $object->status;
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
 
 // show the field project
-
+/*
 		print '<td class="fieldrequired">'.$langs->trans('Project').' </td><td>';
+		$sql_project=array('table'=> 'projet','keyfield'=> 'rowid','fields'=>'ref,title', 'join' => '', 'where'=>'','tail'=>'');
+		$html_project=array('name'=>'Project','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+		$addChoices_project=null;
 		if($edit==1){
-		print select_generic('project','rowid','Project','rowid','description',$object->project);
+		print select_sellist($sql_project,$html_project, $object->project,$addChoices_project );
 		}else{
-		print print_generic('project','rowid',$object->project,'rowid','description');
-		}
+		print_sellist($sql_project,$object->project,'-');		
+                }
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
+*/
+
 
 // show the field product
 
 		print '<td>'.$langs->trans('Product').' </td><td>';
+		$sql_product=array('table'=> 'product','keyfield'=> rowid,'fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		$html_product=array('name'=>'Product','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+		$addChoicesproduct=null;
 		if($edit==1){
-		print select_generic('product','rowid','Product','rowid','description',$object->product);
+		print select_sellist($sql_product,$html_product, $object->product,$addChoices_product );
 		}else{
-		print print_generic('product','rowid',$object->product,'rowid','description');
-		}
+		print_sellist($sql_product,$object->product,'-');		}
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
@@ -464,38 +513,16 @@ switch ($action) {
 // show the field supplier_invoice
 
 		print '<td>'.$langs->trans('Supplierinvoice').' </td><td>';
+		$sql_supplier_invoice=array('table'=> 'facture_fourn','keyfield'=> rowid,'fields'=>'ref,libelle', 'join' => '', 'where'=>'','tail'=>'');
+		$html_supplier_invoice=array('name'=>'Supplierinvoice','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+		$addChoicessupplier_invoice=null;
 		if($edit==1){
-		print select_generic('supplier_invoice','rowid','Supplierinvoice','rowid','description',$object->supplier_invoice);
+		print select_sellist($sql_supplier_invoice,$html_supplier_invoice, $object->supplier_invoice,$addChoices_supplier_invoice );
 		}else{
-		print print_generic('supplier_invoice','rowid',$object->supplier_invoice,'rowid','description');
-		}
+		print_sellist($sql_supplier_invoice,$object->supplier_invoice,'-');		}
 		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
-
-// show the field c_project_cost_type
-
-		print '<td>'.$langs->trans('Cprojectcosttype').' </td><td>';
-		if($edit==1){
-			print '<input type="text" value="'.$object->c_project_cost_type.'" name="Cprojectcosttype">';
-		}else{
-			print $object->c_project_cost_type;
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
-
-// show the field project_cost_spread
-
-		print '<td>'.$langs->trans('Projectcostspread').' </td><td>';
-		if($edit==1){
-		print select_generic('project_cost_spread','rowid','Projectcostspread','rowid','description',$object->project_cost_spread);
-		}else{
-		print print_generic('project_cost_spread','rowid',$object->project_cost_spread,'rowid','description');
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<td></td></tr>\n";
+                print "<td></td></tr>\n";  
+	 
 
         
 

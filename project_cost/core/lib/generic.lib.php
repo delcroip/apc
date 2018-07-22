@@ -196,7 +196,7 @@ function select_generic($table, $fieldValue,$htmlName,$fieldToShow1,$fieldToShow
     global $conf,$langs,$db;
     if( !isset($sqlarray['table'])|| !isset($sqlarray['keyfield'])||!isset($sqlarray['fields']) )
     {
-        return 'error, one of the mandatory field of the function  select_sellist is missing';
+        return 'error, one of the mandatory field of the function  select_sellist is missing:'.$sqlarray['table'].$sqlarray['keyfield'].$sqlarray['fields'];
     }else if (empty($selected)){
         return "NuLL";
     }

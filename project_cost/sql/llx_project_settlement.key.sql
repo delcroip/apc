@@ -14,25 +14,14 @@
 -- along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-CREATE TABLE llx_project_cost_line(
-	-- BEGIN MODULEBUILDER FIELDS
-	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
-	ref varchar(128) NOT NULL, 
-	entity integer DEFAULT 1 NOT NULL, 
-	label varchar(255), 
-	amount double(24,8), 
-        vat_amount double(24,8),
-	description text, 
-	date_creation datetime NOT NULL, 
-	tms timestamp NOT NULL, 
-	fk_user_creat integer NOT NULL, 
-	fk_user_modif integer, 
-	import_key varchar(14), 
-	status integer NOT NULL, 
-	fk_project integer NOT NULL, 
-	fk_product integer, 
-	fk_supplier_invoice integer, 
-	c_project_cost_type integer not null, 
-	fk_project_cost_spread integer not null
-	-- END MODULEBUILDER FIELDS
-) ENGINE=innodb;
+-- BEGIN MODULEBUILDER INDEXES
+ALTER TABLE llx_project_settlement ADD INDEX idx_project_settlement_rowid (rowid);
+ALTER TABLE llx_project_settlement ADD INDEX idx_project_settlement_ref (ref);
+--ALTER TABLE llx_project_settlement ADD INDEX idx_project_settlement_entity (entity);
+--ALTER TABLE llx_project_settlement ADD INDEX idx_project_settlement_status (status);
+-- END MODULEBUILDER INDEXES
+
+--ALTER TABLE llx_project_cost_line ADD UNIQUE INDEX uk_project_cost_line_fieldxyz(fieldx, fieldy);
+
+--ALTER TABLE llx_project_cost_line ADD CONSTRAINT llx_project_cost_line_field_id FOREIGN KEY (fk_field) REFERENCES llx_myotherobject(rowid);
+

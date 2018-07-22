@@ -141,7 +141,9 @@ class modproject_cost extends DolibarrModules
 		// $this->tabs[] = array('data'=>'objecttype:+tabname1:Title1:mylangfile@project_cost:$user->rights->project_cost->read:/project_cost/mynewtab1.php?id=__ID__');  					// To add a new tab identified by code tabname1
        $this->tabs[] = array('data'=>'project:+costs:Costs:cost@project_cost:$user->rights->project_cost->read:/project_cost/line_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
        $this->tabs[] = array('data'=>'project:+stakeholders:Stakeholders:stakeholders@project_cost:$user->rights->project_cost->read:/project_cost/spread_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
-       $this->tabs[] = array('data'=>'project:+balance:Balance:balance@project_cost:$user->rights->project_cost->read:/project_cost/balance.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       // $this->tabs[] = array('data'=>'project:+balance:Balance:balance@project_cost:$user->rights->project_cost->read:/project_cost/balance.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       $this->tabs[] = array('data'=>'project:+settlement:Settlement:settlement@project_cost:$user->rights->project_cost->read:/project_cost/settlement_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       $this->tabs[] = array('data'=>'project:+payment:Payment:payment@project_cost:$user->rights->project_cost->read:/project_cost/payment_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
        
        // $this->tabs[] = array('data'=>'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@project_cost:$user->rights->othermodule->read:/project_cost/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
         // $this->tabs[] = array('data'=>'objecttype:-tabname:NU:conditiontoremove');                                                     										// To remove an existing tab identified by code tabname

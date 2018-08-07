@@ -249,6 +249,11 @@ if ($cancel){
                 $action='create';
         }                            
         break;
+     case 'generate_det':
+          $object->generateSettlementDet();
+          ProjectsettlementReloadPage($backtopage,$projectid,$object->id,'');
+
+          break;
      case 'confirm_delete':
 
             $result=($confirm=='yes')?$object->delete($user):0;
@@ -420,9 +425,9 @@ switch ($action) {
 
 		print '<td class="fieldrequired">'.$langs->trans('Status').' </td><td>';
 		if($edit==1){
-			print '<input type="text" value="'.$object->status.'" name="Status">';
+			print $object->selectLibStatut($form, 'Status');
 		}else{
-			print $object->status;
+			print $object->getLibStatut(2);
 		}
 		print "</td>";
 		print "\n</tr>\n";
@@ -454,6 +459,8 @@ switch ($action) {
                 //if($user->rights->Projectsettlement->edit)
                 //{
                     print '<a href="'.$PHP_SELF.'?id='.$id.'&action=edit" class="butAction">'.$langs->trans('Update').'</a>';
+                    
+                    print '<a href="'.$PHP_SELF.'?id='.$id.'&action=generate_det" class="butAction">'.$langs->trans('GenerateDet').'</a>';
                 //}
                 
                 //if ($user->rights->Projectsettlement->delete)

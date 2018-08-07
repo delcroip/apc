@@ -171,18 +171,21 @@ if ($cancel){
             $action=($action=='add')?'create':'view';
     }
     //retrive the data
-    $object->ref=GETPOST('Ref');
-    $object->label=GETPOST('Label');
-    $object->amount=GETPOST('Amount');
-    $object->vat_amount=GETPOST('Vat_amount');
-    $object->description=GETPOST('Description');
+    $object->ref=GETPOST('Ref','alpha');
+    $object->label=GETPOST('Label','alpha');
+    $object->amount=GETPOST('Amount','float');
+    $object->vat_amount=GETPOST('Vat_amount','float');
+    $object->description=GETPOST('Description','alpha');
 
-    $object->status=GETPOST('Status');
-    $object->project=GETPOST('Projectid');
-    $object->product=GETPOST('Product');
-    $object->supplier_invoice=GETPOST('Supplierinvoice');
-    $object->c_project_cost_type=GETPOST('Cprojectcosttype');
-    $object->project_cost_spread=GETPOST('Projectcostspread');
+    $object->status=GETPOST('Status','int');
+    $object->project=GETPOST('Projectid','int');
+    $object->product=GETPOST('Product','int');
+    $object->supplier_invoice=GETPOST('Supplierinvoice','int');
+    $object->c_project_cost_type=GETPOST('Cprojectcosttype','int');
+    $object->project_cost_spread=GETPOST('Projectcostspread','int');
+    $object->date_start=dol_mktime(0, 0, 0,GETPOST('Datestartmonth'),GETPOST('Datestartday'),GETPOST('Datestartyear'));
+    $object->date_end=dol_mktime(0, 0, 0,GETPOST('Dateendmonth'),GETPOST('Dateendday'),GETPOST('Dateendyear'));
+
     if($object->product<0)$object->product=null;
     if($object->supplier_invoice<0)$object->supplier_invoice=null;
     if($object->project_cost_spread<0)$object->project_cost_spread=null;
@@ -427,43 +430,21 @@ switch ($action) {
 		print "</td>";
 		print "\n</tr>\n";                           
 		print "<tr>\n";
-
-// show the field amount
-
-		print '<td>'.$langs->trans('Amount').' </td><td>';
-		if($edit==1){
-			print '<input type="text" value="'.$object->amount.'" name="Amount">';
-		}else{
-			print $object->amount;
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
-// show the field vat_amount
-
-		print '<td>'.$langs->trans('Vat_amount').' </td><td>';
-		if($edit==1){
-			print '<input type="text" value="'.$object->vat_amount.'" name="Vat_amount">';
-		}else{
-			print $object->vat_amount;
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
 // show the field status
 
 		print '<td class="fieldrequired">'.$langs->trans('Status').' </td><td>';
 		
                 if($edit==1){
                     global $arrayStatus;
-			print $form->selectarray('Status',$arrayStatus,$object->status);
+			print $object->selectLibStatut($form);
                  }else{
 			print $object->getLibStatut(4);
 		}
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
-                
+ 
+      
 // show the field description
 
 		print '<td>'.$langs->trans('Description').' </td><td>';
@@ -474,13 +455,39 @@ switch ($action) {
 		}
 		print "</td>";
 		print "\n</tr>\n";
-		print "<tr>\n";
+		
+// show the field date_start
+                print "<tr>\n";
+		print '<td class="fieldrequired">'.$langs->trans('Datestart').' </td><td>';
+		if($edit==1){
+			print $form->select_date($object->date_start,'Datestart');
+
+		}else{
+			print dol_print_date($object->date_start,'day');
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		
+
+// show the field date_end
+                print "<tr>\n";
+		print '<td>'.$langs->trans('Dateend').' </td><td>';
+		if($edit==1){
+                        if(empty($object->date_end))$object->date_end=-1;
+			print $form->select_date($object->date_end,'Dateend');
+		
+		}else{
+			print dol_print_date($object->date_end,'day');
+		}
+		print "</td>";
+		print "\n</tr>\n";
 
 
 
 
 // show the field project
 /*
+ * print "<tr>\n";
 		print '<td class="fieldrequired">'.$langs->trans('Project').' </td><td>';
 		$sql_project=array('table'=> 'projet','keyfield'=> 'rowid','fields'=>'ref,title', 'join' => '', 'where'=>'','tail'=>'');
 		$html_project=array('name'=>'Project','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
@@ -497,7 +504,7 @@ switch ($action) {
 
 
 // show the field product
-
+                print '<tr class="costtype,costiproduct" style="display:none;">';
 		print '<td>'.$langs->trans('Product').' </td><td>';
 		$sql_product=array('table'=> 'product','keyfield'=> rowid,'fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
 		$html_product=array('name'=>'Product','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
@@ -508,10 +515,30 @@ switch ($action) {
 		print_sellist($sql_product,$object->product,'-');		}
 		print "</td>";
 		print "\n</tr>\n";
-		print "<tr>\n";
+		
+// show the field vat_amount
+                print '<tr class="costtype,costiproduct" style="display:none;">';
+		print '<td>'.$langs->trans('Quantity').' </td><td>';
+		if($edit==1){
+			print '<input type="text" value="'.$object->product_quantity.'" name="Product_quantity">';
+		}else{
+			print $object->product_quantity;
+		}
+		print "</td>";
+		print "\n</tr>\n";                
+                
+                
+                
+                
+
+                
+                //FIXME QUATITY
+                
+
+
 
 // show the field supplier_invoice
-
+                print '<tr class="costtype,costinvoice" style="display:none;">';
 		print '<td>'.$langs->trans('Supplierinvoice').' </td><td>';
 		$sql_supplier_invoice=array('table'=> 'facture_fourn','keyfield'=> rowid,'fields'=>'ref,libelle', 'join' => '', 'where'=>'','tail'=>'');
 		$html_supplier_invoice=array('name'=>'Supplierinvoice','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
@@ -521,9 +548,45 @@ switch ($action) {
 		}else{
 		print_sellist($sql_supplier_invoice,$object->supplier_invoice,'-');		}
 		print "</td>";
-                print "<td></td></tr>\n";  
-	 
+                print "<td></td></tr>\n"; 
+              print '</div>';// class= "costtype" id="SupplierInvoice">';  
+            
+// show the field amount
+        print "<tr>\n";
 
+		print '<td>'.$langs->trans('Amount').' </td><td>';
+		if($edit==1){
+			print '<input type="text" value="'.$object->amount.'" name="Amount">';
+		}else{
+			print price($object->amount,0,$outputlangs,1,-1,-1,$conf->currency);
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
+// show the field vat_amount
+
+		print '<td>'.$langs->trans('Vat_amount').' </td><td>';
+		if($edit==1){
+			print '<input type="text" value="'.$object->vat_amount.'" name="Vat_amount">';
+		}else{
+			print price($object->vat_amount,0,$outputlangs,1,-1,-1,$conf->currency);
+		}
+		print "</td>";
+                print '</div>';  //  id=customAmmount>;'
+		print "\n</tr>\n";
+// show the field vat_amount
+
+		print '<td>'.$langs->trans('Amount_vat_inc').' </td><td>';
+		if($edit==1){
+			//print '<input type="text" value="'.$object->vat_amount.'" name="Vat_amount">';
+		}else{
+			print price($object->vat_amount+$object->amount,0,$outputlangs,1,-1,-1,$conf->currency);
+		}
+		print "</td>";
+                print '</div>';  //  id=customAmmount>;'
+		print "\n</tr>\n";
+		 
+ 
         
 
 	print '</table>'."\n";

@@ -222,6 +222,8 @@ jQuery(document).ready(function() {
 		$sql.=' t.vat_amount,';
 		$sql.=' t.description,';
 		$sql.=' t.import_key,';
+		$sql.=' t.date_start,';
+		$sql.=' t.date_end,';
 		$sql.=' t.status,';
 		$sql.=' t.fk_project,';
 		$sql.=' t.fk_product,';
@@ -286,7 +288,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     $resql=$db->query($sql);
     if ($resql)
     {
-        $param='';
+        $param='&Projectid='.$projectid;
         if (! empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param.='&contextpage='.urlencode($contextpage);
         if ($limit > 0 && $limit != $conf->liste_limit) $param.='&limit='.urlencode($limit);
         	if (!empty($ls_ref))	$param.='&ls_ref='.urlencode($ls_ref);
@@ -326,15 +328,16 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 	print "\n";
 	print_liste_field_titre($langs->trans('Status'),$PHP_SELF,'t.status','',$param,'',$sortfield,$sortorder);
 	print "\n";
-	print_liste_field_titre($langs->trans('Product'),$PHP_SELF,'t.fk_product','',$param,'',$sortfield,$sortorder);
-	print "\n";
-	print_liste_field_titre($langs->trans('Supplierinvoice'),$PHP_SELF,'t.fk_supplier_invoice','',$param,'',$sortfield,$sortorder);
-	print "\n";
+	//print_liste_field_titre($langs->trans('Product'),$PHP_SELF,'t.fk_product','',$param,'',$sortfield,$sortorder);
+	//print "\n";
+	//print_liste_field_titre($langs->trans('Supplierinvoice'),$PHP_SELF,'t.fk_supplier_invoice','',$param,'',$sortfield,$sortorder);
+	//print "\n";
 	print_liste_field_titre($langs->trans('Cprojectcosttype'),$PHP_SELF,'t.c_project_cost_type','',$param,'',$sortfield,$sortorder);
 	print "\n";
 	print_liste_field_titre($langs->trans('Projectcostspread'),$PHP_SELF,'t.fk_project_cost_spread','',$param,'',$sortfield,$sortorder);
 	print "\n";
-
+	print_liste_field_titre($langs->trans('Startdate'),$PHP_SELF,'t.date_start','',$param,'',$sortfield,$sortorder);
+	print "\n";
         
         print '</tr>';
         //SEARCH FIELDS
@@ -367,7 +370,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 //Search field forproject
 
 //Search field forproduct
-	print '<td class="liste_titre" colspan="1" >';
+/*	print '<td class="liste_titre" colspan="1" >';
 		$sql_product=array('table'=> 'product','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
 		$html_product=array('name'=>'ls_product','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
 		$addChoicesproduct=null;		
@@ -380,7 +383,8 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         $addChoices_sup_inv=null;
         print select_sellist($sql_sup_inv,$html_sup_inv, $ls_supplier_invoice,$addChoices_sup_inv );
 		//print select_generic('facture_fourn','rowid','ls_supplier_invoice','ref','libelle',$ls_supplier_invoice);
-	print '</td>';
+	print '</td>';*/
+        
 //Search field forc_project_cost_type
 	print '<td class="liste_titre" colspan="1" >';
         $sql_ctype=array('table'=> 'c_project_cost_type','keyfield'=> 'rowid','fields'=>'label', 'join' => '', 'where'=>'','tail'=>'');
@@ -396,8 +400,8 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         print select_sellist($sql_spread,$html_spread, $ls_supplier_invoice,$addChoices_spread );
 		//print select_generic('project_cost_spread','rowid','ls_project_cost_spread','rowid','description',$ls_project_cost_spread);
 	print '</td>';
-
-        
+// no search for the start date
+        print '<td></td>';
         
         print '<td width="15px">';
         print '<input type="image" class="liste_titre" name="search" src="'.img_picto($langs->trans("Search"),'search.png','','',1).'" value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
@@ -420,15 +424,15 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 		print "<td>".$obj->vat_amount."</td>";
 		print "<td>".$obj->description."</td>";
 
-		print "<td>".$obj->status."</td>";
+		print "<td>".$object->LibStatut($obj->status,2)."</td>";
 		$sql_product=array('table'=> 'product','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
-                print "<td>";
+               /* print "<td>";
 		print_sellist($sql_product,$object->product,'-');
                 print "</td>";
                 print "<td>";
 		$sql_supplier_invoice=array('table'=> 'facture_fourn','keyfield'=> 'rowid','fields'=>'ref,libelle', 'join' => '', 'where'=>'','tail'=>'');
 		print_sellist($sql_supplier_invoice,$object->supplier_invoice,"-" );
-                print "</td>";
+                print "</td>"*/;
                 print "<td>";
 
                 $sql_type=array('table'=> 'c_project_cost_type','keyfield'=> 'rowid','fields'=>'label', 'join' => '', 'where'=>'','tail'=>'');
@@ -439,6 +443,9 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 		$sql_project_cost_spread=array('table'=> 'project_cost_spread','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
 		print_sellist($sql_project_cost_spread,$object->project_cost_spread,'-');
                  print "</td>";
+                 
+                 print "<td>".$db->jdate($obj->date_start)."</td>";
+                 
                 print '<td><a href="line_card.php?action=delete&id='.$obj->rowid.'">'.img_delete().'</a></td>';
 		print "</tr>";
 

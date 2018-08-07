@@ -29,7 +29,8 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/commonobject.class.php';
 //require_once(DOL_DOCUMENT_ROOT."/societe/class/societe.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/product/class/product.class.php");
 
-
+$spreadStatusPictoArray=array(0=>'statut5',1=>'statut4');
+$spreadStatusArray=array(0=> 'Disabled',1=>'Enabled');
 /**
  *	Put here description of your class
  */
@@ -125,7 +126,7 @@ class Projectcostspread extends CommonObject
 		$sql.=' '.(empty($this->description)?'NULL':"'".$this->db->escape($this->description)."'").',';
 		$sql.=' NOW() ,';
 		$sql.=' \''.$user->id.'\',';
-		$sql.=' '.(empty($this->status)?'NULL':"'".$this->status."'").',';
+		$sql.=' '.(empty($this->status)?'0':"'".$this->status."'").',';
 		$sql.=' '.(empty($this->c_sellist)?'NULL':"'".$this->c_sellist."'").',';
 		$sql.=' '.(empty($this->sellist_selected_id)?'NULL':"'".$this->sellist_selected_id."'").',';
 		$sql.=' '.(empty($this->isgroup)?'0':"'".$this->isgroup."'").',';
@@ -375,9 +376,18 @@ class Projectcostspread extends CommonObject
         }
     	return $result;
     }  
-    
+	 /*  Retourne select libelle du status (actif, inactif)
+	 *
+	 *  @param	object 		$form          form object that should be created	
+      *  *  @return	string 			       html code to select status
+	 */
+	function selectLibStatut($form,$htmlname='Status')
+	{
+            global $spreadStatusPictoArray,$spreadStatusArray;
+            return $form->selectarray($htmlname,$spreadStatusArray,$this->status);
+	}   
     /**
-	 *  Retourne le libelle du status d'un user (actif, inactif)
+	 *  Retourne le libelle du status (actif, inactif)
 	 *
 	 *  @param	int		$mode          0=libelle long, 1=libelle court, 2=Picto + Libelle court, 3=Picto, 4=Picto + Libelle long, 5=Libelle court + Picto
 	 *  @return	string 			       Label of status
@@ -386,7 +396,6 @@ class Projectcostspread extends CommonObject
 	{
 		return $this->LibStatut($this->status,$mode);
 	}
-
 	/**
 	 *  Return the status
 	 *
@@ -396,43 +405,36 @@ class Projectcostspread extends CommonObject
 	 */
 	static function LibStatut($status,$mode=0)
 	{
-		global $langs;
-
+            if($status=="")$status=0;
+		global $langs,$spreadStatusPictoArray,$spreadStatusArray;
 		if ($mode == 0)
 		{
 			$prefix='';
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($spreadStatusArray[$status]);
 		}
 		if ($mode == 1)
 		{
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($spreadStatusArray[$status]);
 		}
 		if ($mode == 2)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+			 return img_picto($spreadStatusArray[$status],$spreadStatusPictoArray[$status]).' '.$langs->trans($spreadStatusArray[$status]);
 		}
 		if ($mode == 3)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5');
+			 return img_picto($spreadStatusArray[$status],$spreadStatusPictoArray[$status]);
 		}
 		if ($mode == 4)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+			 return img_picto($spreadStatusArray[$status],$spreadStatusPictoArray[$status]).' '.$langs->trans($spreadStatusArray[$status]);
 		}
 		if ($mode == 5)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($spreadStatusArray[$status]).' '.img_picto($spreadStatusArray[$status],$spreadStatusPictoArray[$status]);
 		}
 		if ($mode == 6)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($spreadStatusArray[$status]).' '.img_picto($spreadStatusArray[$status],$spreadStatusPictoArray[$status]);
 		}
 	}
 
@@ -611,7 +613,7 @@ class Projectcostspread extends CommonObject
         $sql.=' description='.(empty($this->description) ? 'null':"'".$this->db->escape($this->description)."'").',';
         $sql.=' fk_user_modif='."'".$user->id."',";
         $sql.=' import_key='.(empty($this->import_key) ? 'null':"'".$this->db->escape($this->import_key)."'").',';
-        $sql.=' status='.(empty($this->status)? 'null':"'".$this->status."'").',';
+        $sql.=' status='.(empty($this->status)? '0':"'".$this->status."'").',';
         $sql.=' c_sellist='.(empty($this->c_sellist)? 'null':"'".$this->c_sellist."'").',';
         $sql.=' fk_sellist_selected_id='.(empty($this->sellist_selected_id)? 'null':"'".$this->sellist_selected_id."'").',';
         $sql.=' isgroup='.(empty($this->isgroup)? 'null':"'".$this->isgroup."'").',';

@@ -16,10 +16,9 @@
 
 CREATE TABLE llx_payment_project(
 	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
-	ref varchar(50) NOT NULL,
         entity integer DEFAULT 1 NOT NULL, 
 	label varchar(255), 
-	amount double(24,8),
+	amount double(24,8) NOT NULL DEFAULT 0,
         datep           date NOT NULL,               -- date de paiement
         datev           date,                       -- date de valeur (this field should not be here, only into bank tables) 
         fk_project integer NOT NULL,

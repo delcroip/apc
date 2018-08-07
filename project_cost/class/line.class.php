@@ -29,7 +29,8 @@ require_once(DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/societe/class/societe.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/product/class/product.class.php");
 
-
+$costlineStatusPictoArray=array(0=> 'statut7',1=>'statut3',2=>'statut8',3=>'statut4');
+$costlineStatusArray=array(0=> 'Draft',1=>'Validated',2=>'Cancelled',3 =>'Payed');
 /**
  *	Put here description of your class
  */
@@ -64,7 +65,10 @@ class Projectcostline extends CommonObject
 	public $supplier_invoice;
 	public $c_project_cost_type;
 	public $project_cost_spread;
-
+        public $product_quantity;
+        public $date_start;//FIXME
+        public $date_end; //FIXME
+        
     
     // END OF automatic var creation
 
@@ -108,6 +112,8 @@ class Projectcostline extends CommonObject
 		$sql.= 'vat_amount,';
 		$sql.= 'description,';
 		$sql.= 'date_creation,';
+		$sql.= 'date_start,';
+		$sql.= 'date_end,';
 		$sql.= 'fk_user_creat,';
 		$sql.= 'import_key,';
 		$sql.= 'status,';
@@ -115,6 +121,7 @@ class Projectcostline extends CommonObject
 		$sql.= 'fk_product,';
 		$sql.= 'fk_supplier_invoice,';
 		$sql.= 'c_project_cost_type,';
+                $sql.= ' product_quantity,';
 		$sql.= 'fk_project_cost_spread';
 
         
@@ -126,13 +133,16 @@ class Projectcostline extends CommonObject
 		$sql.=' '.(empty($this->vat_amount)?'NULL':"'".$this->vat_amount."'").',';
 		$sql.=' '.(empty($this->description)?'NULL':"'".$this->db->escape($this->description)."'").',';
 		$sql.=' NOW() ,';
+                $sql.=' '.(empty($this->date_start) || dol_strlen($this->date_start)==0?'NULL':"'".$this->db->idate($this->date_start)."'").',';
+		$sql.=' '.(empty($this->date_end) || dol_strlen($this->date_end)==0?'NULL':"'".$this->db->idate($this->date_end)."'").',';
 		$sql.=' "'.$user->id.'",';
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").',';
-		$sql.=' '.(empty($this->status)?'NULL':"'".$this->status."'").',';
+		$sql.=' '.(empty($this->status)?'0':"'".$this->status."'").',';
 		$sql.=' '.(empty($this->project)?'NULL':"'".$this->project."'").',';
 		$sql.=' '.(empty($this->product)?'NULL':"'".$this->product."'").',';
 		$sql.=' '.(empty($this->supplier_invoice)?'NULL':"'".$this->supplier_invoice."'").',';
 		$sql.=' '.(empty($this->c_project_cost_type)?'NULL':"'".$this->c_project_cost_type."'").',';
+                $sql.=' '.(empty($this->product_quantity)?'NULL':"'".$this->product_quantity."'").',';
 		$sql.=' '.(empty($this->project_cost_spread)?'NULL':"'".$this->project_cost_spread."'").'';
 
         
@@ -192,23 +202,26 @@ class Projectcostline extends CommonObject
         $sql = "SELECT";
         $sql.= " t.rowid,";
         
-		$sql.=' t.ref,';
-		$sql.=' t.entity,';
-		$sql.=' t.label,';
-		$sql.=' t.amount,';
-		$sql.=' t.vat_amount,';
-		$sql.=' t.description,';
-		$sql.=' t.date_creation,';
-		$sql.=' t.tms,';
-		$sql.=' t.fk_user_creat,';
-		$sql.=' t.fk_user_modif,';
-		$sql.=' t.import_key,';
-		$sql.=' t.status,';
-		$sql.=' t.fk_project,';
-		$sql.=' t.fk_product,';
-		$sql.=' t.fk_supplier_invoice,';
-		$sql.=' t.c_project_cost_type,';
-		$sql.=' t.fk_project_cost_spread';
+        $sql.=' t.ref,';
+        $sql.=' t.entity,';
+        $sql.=' t.label,';
+        $sql.=' t.amount,';
+        $sql.=' t.vat_amount,';
+        $sql.=' t.description,';
+        $sql.=' t.date_creation,';
+        $sql.=' t.date_start,';
+        $sql.=' t.date_end,';
+        $sql.=' t.tms,';
+        $sql.=' t.fk_user_creat,';
+        $sql.=' t.fk_user_modif,';
+        $sql.=' t.import_key,';
+        $sql.=' t.status,';
+        $sql.=' t.fk_project,';
+        $sql.=' t.fk_product,';
+        $sql.=' t.fk_supplier_invoice,';
+        $sql.=' t.c_project_cost_type,';
+        $sql.= ' product_quantity,';
+        $sql.=' t.fk_project_cost_spread';
 
         
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
@@ -230,6 +243,8 @@ class Projectcostline extends CommonObject
                 $this->vat_amount = $obj->vat_amount;
                 $this->description = $obj->description;
                 $this->date_creation = $this->db->jdate($obj->date_creation);
+                $this->date_start = $this->db->jdate($obj->date_start);
+                $this->date_end = $this->db->jdate($obj->date_end);
                 $this->tms = $this->db->jdate($obj->tms);
                 $this->user_creat = $obj->fk_user_creat;
                 $this->user_modif = $obj->fk_user_modif;
@@ -239,6 +254,7 @@ class Projectcostline extends CommonObject
                 $this->product = $obj->fk_product;
                 $this->supplier_invoice = $obj->fk_supplier_invoice;
                 $this->c_project_cost_type = $obj->c_project_cost_type;
+                $this->product_quantity = $obj->product_quantity;
                 $this->project_cost_spread = $obj->fk_project_cost_spread;
 
                 
@@ -376,7 +392,17 @@ class Projectcostline extends CommonObject
         }
     	return $result;
     }  
-    
+           /**
+	 *  Retourne select libelle du status (actif, inactif)
+	 *
+	 *  @param	object 		$form          form object that should be created	
+      *  *  @return	string 			       html code to select status
+	 */
+	function selectLibStatut($form,$htmlname='Status')
+	{
+            global $costlineStatusArray;
+            return $form->selectarray($htmlname,$costlineStatusArray,$this->status);
+	}     
     /**
 	 *  Retourne le libelle du status d'un user (actif, inactif)
 	 *
@@ -397,43 +423,38 @@ class Projectcostline extends CommonObject
 	 */
 	static function LibStatut($status,$mode=0)
 	{
-		global $langs;
+		global $langs, $costlineStatusArray,$costlineStatusPictoArray;
 
+                if($status=="")$status=0;
 		if ($mode == 0)
 		{
 			$prefix='';
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($costlineStatusArray[$status]);
 		}
 		if ($mode == 1)
 		{
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($costlineStatusArray[$status]);
 		}
 		if ($mode == 2)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+
+			 return img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]).' '.$langs->trans($costlineStatusArray[$status]);
 		}
 		if ($mode == 3)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5');
+			 return img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]);
 		}
 		if ($mode == 4)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+			 return img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]).' '.$langs->trans($costlineStatusArray[$status]);
 		}
 		if ($mode == 5)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($costlineStatusArray[$status]).' '.img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]);
 		}
 		if ($mode == 6)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($costlineStatusArray[$status]).' '.img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]);
 		}
 	}
 
@@ -544,24 +565,26 @@ class Projectcostline extends CommonObject
     {
         $this->id=0;
         
-		$this->ref='';
-		$this->entity='';
-		$this->label='';
-		$this->amount='';
-		$this->vat_amount='';
-		$this->description='';
-		$this->date_creation='';
-		$this->tms='';
-		$this->user_creat='';
-		$this->user_modif='';
-		$this->import_key='';
-		$this->status='';
-		$this->project='';
-		$this->product='';
-		$this->supplier_invoice='';
-		$this->c_project_cost_type='';
-		$this->project_cost_spread='';
-
+        $this->ref='';
+        $this->entity='';
+        $this->label='';
+        $this->amount='';
+        $this->vat_amount='';
+        $this->description='';
+        $this->date_creation='';
+        $this->tms='';
+        $this->user_creat='';
+        $this->user_modif='';
+        $this->import_key='';
+        $this->status='';
+        $this->project='';
+        $this->product='';
+        $this->supplier_invoice='';
+        $this->c_project_cost_type='';
+        $this->product_quantity='';
+        $this->project_cost_spread='';
+        $this->date_start='';
+        $this->date_end='';
         
     }
     /**
@@ -586,7 +609,10 @@ class Projectcostline extends CommonObject
         if (!empty($this->product)) $this->product=trim($this->product);
         if (!empty($this->supplier_invoice)) $this->supplier_invoice=trim($this->supplier_invoice);
         if (!empty($this->c_project_cost_type)) $this->c_project_cost_type=trim($this->c_project_cost_type);
+        if (!empty($this->product_quantity)) $this->product_quantity=trim($this->product_quantity);
         if (!empty($this->project_cost_spread)) $this->project_cost_spread=trim($this->project_cost_spread);
+        if (!empty($this->date_start)) $this->date_start=trim($this->date_start);
+        if (!empty($this->date_end)) $this->date_end=trim($this->date_end);
 
         
     }
@@ -599,19 +625,22 @@ class Projectcostline extends CommonObject
     function setSQLfields($user){
         $sql='';
         
-		$sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
-		$sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
-		$sql.=' amount='.(empty($this->amount)!=0 ? 'null':"'".$this->amount."'").',';
-		$sql.=' vat_amount='.(empty($this->vat_amount)!=0 ? 'null':"'".$this->vat_amount."'").',';
-		$sql.=' description='.(empty($this->description)!=0 ? 'null':"'".$this->db->escape($this->description)."'").',';
-		$sql.=' fk_user_modif="'.$user->id.'",';
-		$sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").',';
-		$sql.=' status='.(empty($this->status)!=0 ? 'null':"'".$this->status."'").',';
-		$sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
-		$sql.=' fk_product='.(empty($this->product)!=0 ? 'null':"'".$this->product."'").',';
-		$sql.=' fk_supplier_invoice='.(empty($this->supplier_invoice)!=0 ? 'null':"'".$this->supplier_invoice."'").',';
-		$sql.=' c_project_cost_type='.(empty($this->c_project_cost_type)!=0 ? 'null':"'".$this->c_project_cost_type."'").',';
-		$sql.=' fk_project_cost_spread='.(empty($this->project_cost_spread)!=0 ? 'null':"'".$this->project_cost_spread."'").'';
+        $sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
+        $sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
+        $sql.=' amount='.(empty($this->amount)!=0 ? 'null':"'".$this->amount."'").',';
+        $sql.=' vat_amount='.(empty($this->vat_amount)!=0 ? 'null':"'".$this->vat_amount."'").',';
+        $sql.=' description='.(empty($this->description)!=0 ? 'null':"'".$this->db->escape($this->description)."'").',';
+        $sql.=' fk_user_modif="'.$user->id.'",';
+        $sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").',';
+        $sql.=' status='.(empty($this->status)!=0 ? '0':"'".$this->status."'").',';
+        $sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
+        $sql.=' fk_product='.(empty($this->product)!=0 ? 'null':"'".$this->product."'").',';
+        $sql.=' fk_supplier_invoice='.(empty($this->supplier_invoice)!=0 ? 'null':"'".$this->supplier_invoice."'").',';
+        $sql.=' c_project_cost_type='.(empty($this->c_project_cost_type)!=0 ? 'null':"'".$this->c_project_cost_type."'").',';
+        $sql.=' product_quantity='.(empty($this->product_quantity)!=0 ? 'null':"'".$this->product_quantity."'").',';
+        $sql.=' fk_project_cost_spread='.(empty($this->project_cost_spread)!=0 ? 'null':"'".$this->project_cost_spread."'").',';
+        $sql.=' date_start='.(dol_strlen($this->date_start)!=0 ? "'".$this->db->idate($this->date_start)."'":'null').',';
+        $sql.=' date_end='.(dol_strlen($this->date_end)!=0 ? "'".$this->db->idate($this->date_end)."'":'null').'';
 
         
         return $sql;

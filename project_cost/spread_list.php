@@ -290,7 +290,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     $resql=$object->db->query($sql);
     if ($resql)
     {
-        $param='';
+        $param='&Projectid='.$projectid;
         if (! empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param.='&contextpage='.urlencode($contextpage);
         if ($limit > 0 && $limit != $conf->liste_limit) $param.='&limit='.urlencode($limit);
         	if (!empty($ls_ref))	$param.='&ls_ref='.urlencode($ls_ref);
@@ -409,8 +409,8 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 		print "<td>".print_generic('societe','rowid',$obj->fk_soc,'nom','')."</td>";
                 print "\n";
 		print "<td>".$obj->description."</td>";
-                print "\n";
-		print "<td>".$object->LibStatut($obj->status,3)."</td>";
+                print "\n";		
+                print "<td>".$object->LibStatut($obj->status,2)."</td>";
                 print "\n";
 		print "<td>".$object->LibStatut($obj->isgroup,3)."</td>";
                 print "\n";

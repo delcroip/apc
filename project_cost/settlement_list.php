@@ -266,7 +266,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     $resql=$db->query($sql);
     if ($resql)
     {
-        $param='';
+        $param='&Projectid='.$projectid;
         if (! empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param.='&contextpage='.urlencode($contextpage);
         if ($limit > 0 && $limit != $conf->liste_limit) $param.='&limit='.urlencode($limit);
         	if (!empty($ls_ref))	$param.='&ls_ref='.urlencode($ls_ref);
@@ -339,7 +339,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 		print "<td>".$object->getNomUrl($obj->ref,'',$obj->ref,0)."</td>";
 		print "<td>".$obj->label."</td>";
 		print "<td>".dol_print_date($obj->date_settlement,'day')."</td>";
-		print "<td>".$obj->status."</td>";
+		print "<td>".$object->LibStatut($obj->status,3)."</td>";
 		print '<td><a href=settlement_card.php?action=delete&Projectid='.$projectid.'&id='.$obj->rowid.'">'.img_delete().'</a></td>';
 		print "</tr>";
 

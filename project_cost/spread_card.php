@@ -424,7 +424,7 @@ switch ($action) {
                     global $arrayStatus;
 			print $form->selectarray('Status',$arrayStatus,$object->status);
                         }else{
-			print $object->getLibStatut(4);
+			print $object->getLibStatut(2);
 		}
 		print "</td>";
 		print "\n</tr>\n";
@@ -466,7 +466,7 @@ if($conf->global->PROJECT_COST_ATTACHED_ITEM){
 		print "</td>";
 		print "\n</tr>\n";
 // show the field date_start
-
+                print "<tr>\n";
 		print '<td>'.$langs->trans('Datestart').' </td><td>';
 		if($edit==1){
 		if($new==1){
@@ -479,10 +479,10 @@ if($conf->global->PROJECT_COST_ATTACHED_ITEM){
 		}
 		print "</td>";
 		print "\n</tr>\n";
-		print "<tr>\n";
+		
 
 // show the field date_end
-
+                print "<tr>\n";
 		print '<td>'.$langs->trans('Dateend').' </td><td>';
 		if($edit==1){
 		if($new==1){
@@ -495,7 +495,7 @@ if($conf->global->PROJECT_COST_ATTACHED_ITEM){
 		}
 		print "</td>";
 		print "\n</tr>\n";
-		print "<td></td></tr>\n";
+		//print "<td></td></tr>\n";
 
         
 

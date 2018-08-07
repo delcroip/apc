@@ -51,9 +51,8 @@ class Projectsettlementdet extends CommonObject
 	public $settlement;
 	public $project_cost_line;
 	public $amount;
-	public $capex_amount;
+	public $c_project_cost_type;
 	public $vat_amount;
-	public $taxe_benefit_amount;
 	public $date_creation='';
 	public $date_modification='';
 	public $user_creat;
@@ -100,9 +99,8 @@ class Projectsettlementdet extends CommonObject
 		$sql.= 'fk_settlement,';
 		$sql.= 'fk_project_cost_line,';
 		$sql.= 'amount,';
-		$sql.= 'capex_amount,';
+		$sql.= 'c_project_cost_type,';
 		$sql.= 'vat_amount,';
-		$sql.= 'taxe_benefit_amount,';
 		$sql.= 'date_creation,';
 		$sql.= 'fk_user_creat,';
 		$sql.= 'import_key';
@@ -113,9 +111,8 @@ class Projectsettlementdet extends CommonObject
 		$sql.=' '.(empty($this->settlement)?'NULL':"'".$this->settlement."'").',';
 		$sql.=' '.(empty($this->project_cost_line)?'NULL':"'".$this->project_cost_line."'").',';
 		$sql.=' '.(empty($this->amount)?'NULL':"'".$this->amount."'").',';
-		$sql.=' '.(empty($this->capex_amount)?'NULL':"'".$this->capex_amount."'").',';
-		$sql.=' '.(empty($this->vat_amount)?'NULL':"'".$this->vat_amount."'").',';
-		$sql.=' '.(empty($this->taxe_benefit_amount)?'NULL':"'".$this->taxe_benefit_amount."'").',';
+		$sql.=' '.(empty($this->c_project_cost_type)?'NULL':"'".$this->c_project_cost_type."'").',';
+                $sql.=' '.(empty($this->vat_amount)?'NULL':"'".$this->vat_amount."'").',';
 		$sql.=' NOW() ,';
 		$sql.=' "'.$user->id.'",';
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").'';
@@ -177,17 +174,16 @@ class Projectsettlementdet extends CommonObject
         $sql = "SELECT";
         $sql.= " t.rowid,";
         
-		$sql.=' t.fk_settlement,';
-		$sql.=' t.fk_project_cost_line,';
-		$sql.=' t.amount,';
-		$sql.=' t.capex_amount,';
-		$sql.=' t.vat_amount,';
-		$sql.=' t.taxe_benefit_amount,';
-		$sql.=' t.date_creation,';
-		$sql.=' t.date_modification,';
-		$sql.=' t.fk_user_creat,';
-		$sql.=' t.fk_user_modif,';
-		$sql.=' t.import_key';
+        $sql.=' t.fk_settlement,';
+        $sql.=' t.fk_project_cost_line,';
+        $sql.=' t.amount,';
+        $sql.=' t.c_project_cost_type,';
+        $sql.=' t.vat_amount,';
+        $sql.=' t.date_creation,';
+        $sql.=' t.date_modification,';
+        $sql.=' t.fk_user_creat,';
+        $sql.=' t.fk_user_modif,';
+        $sql.=' t.import_key';
 
         
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
@@ -202,17 +198,16 @@ class Projectsettlementdet extends CommonObject
                 $obj = $this->db->fetch_object($resql);
                 $this->id    = $obj->rowid;
                 
-				$this->settlement = $obj->fk_settlement;
-				$this->project_cost_line = $obj->fk_project_cost_line;
-				$this->amount = $obj->amount;
-				$this->capex_amount = $obj->capex_amount;
-				$this->vat_amount = $obj->vat_amount;
-				$this->taxe_benefit_amount = $obj->taxe_benefit_amount;
-				$this->date_creation = $this->db->jdate($obj->date_creation);
-				$this->date_modification = $this->db->jdate($obj->date_modification);
-				$this->user_creat = $obj->fk_user_creat;
-				$this->user_modif = $obj->fk_user_modif;
-				$this->import_key = $obj->import_key;
+                $this->settlement = $obj->fk_settlement;
+                $this->project_cost_line = $obj->fk_project_cost_line;
+                $this->amount = $obj->amount;
+                $this->c_project_cost_type = $obj->c_project_cost_type;
+                $this->vat_amount = $obj->vat_amount;
+                $this->date_creation = $this->db->jdate($obj->date_creation);
+                $this->date_modification = $this->db->jdate($obj->date_modification);
+                $this->user_creat = $obj->fk_user_creat;
+                $this->user_modif = $obj->fk_user_modif;
+                $this->import_key = $obj->import_key;
 
                 
             }
@@ -520,9 +515,8 @@ class Projectsettlementdet extends CommonObject
 		$this->settlement='';
 		$this->project_cost_line='';
 		$this->amount='';
-		$this->capex_amount='';
 		$this->vat_amount='';
-		$this->taxe_benefit_amount='';
+                $this->c_project_cost_type='';
 		$this->date_creation='';
 		$this->date_modification='';
 		$this->user_creat='';
@@ -542,9 +536,8 @@ class Projectsettlementdet extends CommonObject
 		if (!empty($this->settlement)) $this->settlement=trim($this->settlement);
 		if (!empty($this->project_cost_line)) $this->project_cost_line=trim($this->project_cost_line);
 		if (!empty($this->amount)) $this->amount=trim($this->amount);
-		if (!empty($this->capex_amount)) $this->capex_amount=trim($this->capex_amount);
+                if (!empty($this->c_project_cost_type)) $this->c_project_cost_type=trim($this->c_project_cost_type);
 		if (!empty($this->vat_amount)) $this->vat_amount=trim($this->vat_amount);
-		if (!empty($this->taxe_benefit_amount)) $this->taxe_benefit_amount=trim($this->taxe_benefit_amount);
 		if (!empty($this->date_creation)) $this->date_creation=trim($this->date_creation);
 		if (!empty($this->date_modification)) $this->date_modification=trim($this->date_modification);
 		if (!empty($this->user_creat)) $this->user_creat=trim($this->user_creat);
@@ -565,9 +558,8 @@ class Projectsettlementdet extends CommonObject
 		$sql.=' fk_settlement='.(empty($this->settlement)!=0 ? 'null':"'".$this->settlement."'").',';
 		$sql.=' fk_project_cost_line='.(empty($this->project_cost_line)!=0 ? 'null':"'".$this->project_cost_line."'").',';
 		$sql.=' amount='.(empty($this->amount)!=0 ? 'null':"'".$this->amount."'").',';
-		$sql.=' capex_amount='.(empty($this->capex_amount)!=0 ? 'null':"'".$this->capex_amount."'").',';
+                $sql.=' c_project_cost_type='.(empty($this->c_project_cost_type)!=0 ? 'null':"'".$this->c_project_cost_type."'").',';
 		$sql.=' vat_amount='.(empty($this->vat_amount)!=0 ? 'null':"'".$this->vat_amount."'").',';
-		$sql.=' taxe_benefit_amount='.(empty($this->taxe_benefit_amount)!=0 ? 'null':"'".$this->taxe_benefit_amount."'").',';
 		$sql.=' date_modification=NOW() ,';
 		$sql.=' fk_user_modif="'.$user->id.'",';
 		$sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").'';

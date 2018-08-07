@@ -29,8 +29,11 @@
 require_once(DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/societe/class/societe.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/product/class/product.class.php");
+require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 
-
+$paymentprojectStatusPictoArray=array(0=> 'statut7',1=>'statut3',2=>'statut8',3=>'statut4');
+$paymentprojectStatusArray=array(0=> 'Draft',1=>'Validated',2=>'Cancelled',3 =>'Payed');                
+                
 /**
  *	Put here description of your class
  */
@@ -48,7 +51,7 @@ class Paymentproject extends CommonObject
     public $id;
     // BEGIN OF automatic var creation
     
-	public $ref;
+//	public $ref;
 	public $entity;
 	public $label;
 	public $amount;
@@ -63,7 +66,7 @@ class Paymentproject extends CommonObject
 	public $user_creat;
 	public $user_modif;
 	public $import_key;
-
+        public $num_payment;
     
     // END OF automatic var creation
 
@@ -101,7 +104,7 @@ class Paymentproject extends CommonObject
         // Insert request
         $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element."(";
         
-		$sql.= 'ref,';
+//		$sql.= 'ref,';
 		$sql.= 'label,';
 		$sql.= 'amount,';
 		$sql.= 'datep,';
@@ -112,12 +115,13 @@ class Paymentproject extends CommonObject
 		$sql.= 'fk_bank,';
 		$sql.= 'date_creation,';
 		$sql.= 'fk_user_creat,';
+                $sql.= 'num_payment,';
 		$sql.= 'import_key';
 
         
         $sql.= ") VALUES (";
         
-		$sql.=' '.(empty($this->ref)?'NULL':"'".$this->db->escape($this->ref)."'").',';
+//		$sql.=' '.(empty($this->ref)?'NULL':"'".$this->db->escape($this->ref)."'").',';
 		$sql.=' '.(empty($this->label)?'NULL':"'".$this->db->escape($this->label)."'").',';
 		$sql.=' '.(empty($this->amount)?'NULL':"'".$this->amount."'").',';
 		$sql.=' '.(empty($this->datep) || dol_strlen($this->datep)==0?'NULL':"'".$this->db->idate($this->datep)."'").',';
@@ -128,6 +132,7 @@ class Paymentproject extends CommonObject
 		$sql.=' '.(empty($this->bank)?'NULL':"'".$this->bank."'").',';
 		$sql.=' NOW() ,';
 		$sql.=' "'.$user->id.'",';
+		$sql.=' '.(empty($this->num_payment)?'NULL':"'".$this->db->escape($this->num_payment)."'").',';                
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").'';
 
         
@@ -142,17 +147,79 @@ class Paymentproject extends CommonObject
         if (! $error)
         {
             $this->id = $this->db->last_insert_id(MAIN_DB_PREFIX.$this->table_element);
+                if ($this->id > 0)
+                {
+                        if (! empty($conf->banque->enabled) && ! empty($this->amount))
+                        {
+                                // Insert into llx_bank
+                                require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
+                                $acc = new Account($this->db);
+                                $result=$acc->fetch($this->bank);
+                                if ($result <= 0) dol_print_error($this->db);
 
-            if (! $notrigger)
-            {
-            // Uncomment this and change MYOBJECT to your own tag if you
-            // want this action calls a trigger.
+                                // Insert payment into llx_bank
+                                // Add link 'payment_salary' in bank_url between payment and bank transaction
+                                $bank_line_id = $acc->addline( // FIXME shows as salary payment
+                                        $this->datep,
+                                        $this->typepayment,
+                                        $this->label,
+                                        $this->amount,
+                                        $this->num_payment,
+                                        '',
+                                        $user
+                                );
+
+                                // Update fk_bank into llx_paiement.
+                                // So we know the payment which has generate the banking ecriture
+                                if ($bank_line_id > 0)
+                                {
+                                        $this->update_fk_bank($bank_line_id); //fixme
+                                }
+                                else
+                                {
+                                        $this->error=$acc->error;
+                                        $error++;
+                                }
+
+                                if (! $error)
+                                {
+                                        // Add link 'payment_salary' in bank_url between payment and bank transaction
+                                        $url=dol_buildpath('/project_cost/payment_card.php',1).'?action=view&id="';
+
+                                        $result=$acc->add_url_line($bank_line_id, $this->id, $url, "(ProjectPayment)", "payment_salary");
+                                        if ($result <= 0)
+                                        {
+                                                $this->error=$acc->error;
+                                                $error++;
+                                        }
+                                }
+
+                                $fproject=new Project($this->db);
+                                $fproject->fetch($this->project);
+
+                                // Add link 'user' in bank_url between operation and bank transaction
+                                $result=$acc->add_url_line(
+                                        $bank_line_id,
+                                        $this->project,
+                                        DOL_URL_ROOT.'/projet/card.php?id=',
+                                        $fproject->title,
+                                        // $langs->trans("SalaryPayment").' '.$fuser->getFullName($langs).' '.dol_print_date($this->datesp,'dayrfc').' '.dol_print_date($this->dateep,'dayrfc'),
+                                        'project'
+                                );
+
+                                if ($result <= 0)
+                                {
+                                        $this->error=$acc->error;
+                                        $error++;
+                                }
+                        }
 
             //// Call triggers
-            //$result=$this->call_trigger('MYOBJECT_CREATE',$user);
-            //if ($result < 0) { $error++; //Do also what you must do to rollback action if trigger fail}
+            $result=$this->call_trigger('PROJECT_PAYMENT_CREATE',$user);
+            if ($result < 0) { $error++; }
             //// End call triggers
-            }
+                }
+
         }
 
         // Commit or rollback
@@ -172,7 +239,27 @@ class Paymentproject extends CommonObject
             return $this->id;
         }
     }
-
+	/**
+	 *  Update link between payment salary and line generate into llx_bank
+	 *
+	 *  @param	int		$id_bank    Id bank account
+	 *	@return	int					<0 if KO, >0 if OK
+	 */
+	function update_fk_bank($id_bank)
+	{
+		$sql = 'UPDATE '.MAIN_DB_PREFIX.$this->table_element.' SET fk_bank = '.$id_bank;
+		$sql.= ' WHERE rowid = '.$this->id;
+		$result = $this->db->query($sql);
+		if ($result)
+		{
+			return 1;
+		}
+		else
+		{
+			dol_print_error($this->db);
+			return -1;
+		}
+	}
 
     /**
      *  Load object in memory from the database
@@ -187,7 +274,7 @@ class Paymentproject extends CommonObject
         $sql = "SELECT";
         $sql.= " t.rowid,";
         
-		$sql.=' t.ref,';
+//		$sql.=' t.ref,';
 		$sql.=' t.entity,';
 		$sql.=' t.label,';
 		$sql.=' t.amount,';
@@ -201,12 +288,14 @@ class Paymentproject extends CommonObject
 		$sql.=' t.date_modification,';
 		$sql.=' t.fk_user_creat,';
 		$sql.=' t.fk_user_modif,';
+		$sql.=' t.num_payment,';
 		$sql.=' t.import_key';
 
         
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
-        if ($ref) $sql.= " WHERE t.ref = '".$ref."'";
-        else $sql.= " WHERE t.rowid = ".$id;
+//        if ($ref) $sql.= " WHERE t.ref = '".$ref."'";
+       // else 
+            $sql.= " WHERE t.rowid = ".$id;
     	dol_syslog(get_class($this)."::fetch");
         $resql=$this->db->query($sql);
         if ($resql)
@@ -216,7 +305,7 @@ class Paymentproject extends CommonObject
                 $obj = $this->db->fetch_object($resql);
                 $this->id    = $obj->rowid;
                 
-				$this->ref = $obj->ref;
+//				$this->ref = $obj->ref;
 				$this->entity = $obj->entity;
 				$this->label = $obj->label;
 				$this->amount = $obj->amount;
@@ -230,6 +319,7 @@ class Paymentproject extends CommonObject
 				$this->date_modification = $this->db->jdate($obj->date_modification);
 				$this->user_creat = $obj->fk_user_creat;
 				$this->user_modif = $obj->fk_user_modif;
+				$this->num_payment = $obj->num_payment;                                
 				$this->import_key = $obj->import_key;
 
                 
@@ -276,8 +366,8 @@ class Paymentproject extends CommonObject
             // want this action calls a trigger.
 
             //// Call triggers
-            //$result=$this->call_trigger('MYOBJECT_MODIFY',$user);
-            //if ($result < 0) { $error++; //Do also what you must do to rollback action if trigger fail}
+            $result=$this->call_trigger('PROJECT_PAYMENT_MODIFY',$user);
+            if ($result < 0) { $error++; }
             //// End call triggers
                  }
             }
@@ -322,8 +412,8 @@ class Paymentproject extends CommonObject
                 $id=$this->id;
             }else if (isset($this->rowid)){
                 $id=$this->rowid;
-            }if(isset($this->ref)){
-                $ref=$this->ref;
+  //          }if(isset($this->ref)){
+  //              $ref=$this->ref;
             }
         }
         $linkclose='';
@@ -340,21 +430,21 @@ class Paymentproject extends CommonObject
         
         if($id){
             $lien = '<a href="'.dol_buildpath('/project_cost/payment_card.php',1).'id='.$id.'&action=view"'.$linkclose.'>';
-        }else if (!empty($ref)){
-            $lien = '<a href="'.dol_buildpath('/project_cost/payment_card.php',1).'?ref='.$ref.'&action=view"'.$linkclose.'>';
+   //     }else if (!empty($ref)){
+   //         $lien = '<a href="'.dol_buildpath('/project_cost/payment_card.php',1).'?ref='.$ref.'&action=view"'.$linkclose.'>';
         }else{
             $lien =  "";
         }
         $lienfin=empty($lien)?'':'</a>';
 
     	$picto='generic';
-        $label = '<u>' . $langs->trans("spread") . '</u>';
+        $label = '<u>' . $langs->trans("paymentproject") . '</u>';
         $label.= '<br>';
-        if($ref){
-            $label.=$langs->trans("Red").': '.$ref;
-        }else if($id){
+     //   if($ref){
+      //      $label.=$langs->trans("Red").': '.$ref;
+        //}else if($id){
             $label.=$langs->trans("#").': '.$id;
-        }
+       // }
         
         
         
@@ -367,7 +457,17 @@ class Paymentproject extends CommonObject
         }
     	return $result;
     }  
-    
+         /**
+	 *  Retourne select libelle du status (actif, inactif)
+	 *
+	 *  @param	object 		$form          form object that should be created	
+      *  *  @return	string 			       html code to select status
+	 */
+	function selectLibStatut($form,$htmlname='Status')
+	{
+            global $paymentprojectStatusArray;
+            return $form->selectarray($htmlname,$paymentprojectStatusArray,$this->status);
+	}   
     /**
 	 *  Retourne le libelle du status d'un user (actif, inactif)
 	 *
@@ -388,43 +488,37 @@ class Paymentproject extends CommonObject
 	 */
 	static function LibStatut($status,$mode=0)
 	{
-		global $langs;
+		global $langs, $paymentprojectStatusArray,$paymentprojectStatusPictoArray;
+                if($status=="")$status=0;
 
 		if ($mode == 0)
 		{
 			$prefix='';
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($paymentprojectStatusArray[$status]);
 		}
 		if ($mode == 1)
 		{
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($paymentprojectStatusArray[$status]);
 		}
 		if ($mode == 2)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+			 return img_picto($paymentprojectStatusArray[$status],$paymentprojectStatusPictoArray[$status]).' '.$langs->trans($paymentprojectStatusArray[$status]);
 		}
 		if ($mode == 3)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5');
+			 return img_picto($paymentprojectStatusArray[$status],$paymentprojectStatusPictoArray[$status]);
 		}
 		if ($mode == 4)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+			 return img_picto($paymentprojectStatusArray[$status],$paymentprojectStatusPictoArray[$status]).' '.$langs->trans($paymentprojectStatusArray[$status]);
 		}
 		if ($mode == 5)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($paymentprojectStatusArray[$status]).' '.img_picto($paymentprojectStatusArray[$status],$paymentprojectStatusPictoArray[$status]);
 		}
 		if ($mode == 6)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($paymentprojectStatusArray[$status]).' '.img_picto($paymentprojectStatusArray[$status],$paymentprojectStatusPictoArray[$status]);
 		}
 	}
 
@@ -435,7 +529,7 @@ class Paymentproject extends CommonObject
     *   @param  int		$notrigger	 0=launch triggers after, 1=disable triggers
      *  @return	int					 <0 if KO, >0 if OK
      */
-    function delete($user, $notrigger=0)
+    function delete($user, $notrigger=0) 
     {
         global $conf, $langs;
         $error=0;
@@ -459,6 +553,7 @@ class Paymentproject extends CommonObject
 
         dol_syslog(__METHOD__);
         $resql = $this->db->query($sql);
+
         if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
         }
 
@@ -475,7 +570,20 @@ class Paymentproject extends CommonObject
         }
         else
         {
-            $this->db->commit();
+            if ($object->bank)
+            {
+                $accountline=new AccountLine($db);
+                $result=$accountline->fetch($object->bank);
+                if ($error > 0) $error=$accountline->delete($user);	// $result may be 0 if not found (when bank entry was deleted manually and fk_bank point to nothing)
+                if ($error < 0) {
+                    $object->error=$accountline->error;
+                     $this->db->rollback();
+                    setEventMessages($object->error, $object->errors, 'errors');
+                }else{
+                     $this->db->commit();
+                }
+            }else
+                $this->db->commit();
             return 1;
         }
     }
@@ -535,7 +643,7 @@ class Paymentproject extends CommonObject
     {
         $this->id=0;
         
-		$this->ref='';
+	//	$this->ref='';
 		$this->entity='';
 		$this->label='';
 		$this->amount='';
@@ -550,6 +658,7 @@ class Paymentproject extends CommonObject
 		$this->user_creat='';
 		$this->user_modif='';
 		$this->import_key='';
+                $this->num_payment='';
 
         
     }
@@ -561,7 +670,7 @@ class Paymentproject extends CommonObject
      */       
     function cleanParam(){
         
-		if (!empty($this->ref)) $this->ref=trim($this->ref);
+	//	if (!empty($this->ref)) $this->ref=trim($this->ref);
 		if (!empty($this->label)) $this->label=trim($this->label);
 		if (!empty($this->amount)) $this->amount=trim($this->amount);
 		if (!empty($this->datep)) $this->datep=trim($this->datep);
@@ -574,6 +683,7 @@ class Paymentproject extends CommonObject
 		if (!empty($this->date_modification)) $this->date_modification=trim($this->date_modification);
 		if (!empty($this->user_creat)) $this->user_creat=trim($this->user_creat);
 		if (!empty($this->user_modif)) $this->user_modif=trim($this->user_modif);
+                if (!empty($this->num_payment)) $this->num_payment=trim($this->num_payment);
 		if (!empty($this->import_key)) $this->import_key=trim($this->import_key);
 
         
@@ -587,7 +697,7 @@ class Paymentproject extends CommonObject
     function setSQLfields($user){
         $sql='';
         
-		$sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
+	//	$sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
 		$sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
 		$sql.=' amount='.(empty($this->amount)!=0 ? 'null':"'".$this->amount."'").',';
 		$sql.=' datep='.(dol_strlen($this->datep)!=0 ? "'".$this->db->idate($this->datep)."'":'null').',';
@@ -598,11 +708,96 @@ class Paymentproject extends CommonObject
 		$sql.=' fk_bank='.(empty($this->bank)!=0 ? 'null':"'".$this->bank."'").',';
 		$sql.=' date_modification=NOW() ,';
 		$sql.=' fk_user_modif="'.$user->id.'",';
+		$sql.=' num_payment='.(empty($this->num_payment)!=0 ? 'null':"'".$this->db->escape($this->num_payment)."'").',';
 		$sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").'';
 
         
         return $sql;
     }
+    /**
+     *      Add record into bank for payment with links between this bank record and invoices of payment.
+     *      All payment properties must have been set first like after a call to create().
+     *
+     *      @param	User	$user               Object of user making payment
+     *      @param  string	$mode               'payment_project'
+     *      @param  string	$label              Label to use in bank record
+     *      @param  int		$accountid          Id of bank account to do link with
+     *      @param  string	$emetteur_nom       Name of transmitter
+     *      @param  string	$emetteur_banque    Name of bank
+     *      @return int                 		<0 if KO, >0 if OK
+     */
+    function addPaymentToBank($user,$mode,$label,$accountid,$emetteur_nom,$emetteur_banque)
+    {
+        global $conf;
+
+        $error=0;
+
+        if (! empty($conf->banque->enabled))
+        {
+            require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
+
+            $acc = new Account($this->db);
+            $acc->fetch($accountid);
+
+            $total=$this->total;
+            if ($mode == 'payment_project') $amount=$total;
+
+            // Insert payment into llx_bank
+            $bank_line_id = $acc->addline(
+                $this->datepaid,
+                $this->paymenttype,  // Payment mode id or code ("CHQ or VIR for example")
+                $label,
+                $amount,
+                $this->num_payment,
+                '',
+                $user,
+                $emetteur_nom,
+                $emetteur_banque
+            );
+
+            // Update fk_bank in llx_paiement.
+            // On connait ainsi le paiement qui a genere l'ecriture bancaire
+            if ($bank_line_id > 0)
+            {
+                $result=$this->update_fk_bank($bank_line_id);
+                if ($result <= 0)
+                {
+                    $error++;
+                    dol_print_error($this->db);
+                }
+
+                // Add link 'payment', 'payment_supplier', 'payment_project' in bank_url between payment and bank transaction
+                $url='';
+                if ($mode == 'payment_project') $url=dol_buildpath('/project_cost/payment_card.php',1).'?id='.$this->id.'&action=view&Projectid='.$this->project;
+                if ($url)
+                {
+                    $result=$acc->add_url_line($bank_line_id, $this->id, $url, '(paiement project)', $mode);
+                    if ($result <= 0)
+                    {
+                        $error++;
+                        dol_print_error($this->db);
+                    }
+                }
+            }
+            else
+            {
+                $this->error=$acc->error;
+                $error++;
+            }
+        }
+
+        if (! $error)
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
+
+
 
 
 }

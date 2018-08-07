@@ -29,8 +29,9 @@
 require_once(DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/societe/class/societe.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/product/class/product.class.php");
-
-
+include_once 'projectsettlementdet.class.php';
+$settlmentStatusPictoArray=array(0=> 'statut7',1=>'statut3',2=>'statut8',3=>'statut4');
+$settlmentStatusArray=array(0=> 'Draft',1=>'Validated',2=>'Cancelled',3 =>'Payed');
 /**
  *	Put here description of your class
  */
@@ -119,7 +120,7 @@ class Projectsettlement extends CommonObject
 		$sql.=' NOW() ,';
 		$sql.=' "'.$user->id.'",';
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").',';
-		$sql.=' '.(empty($this->status)?'NULL':"'".$this->status."'").'';
+		$sql.=' '.(empty($this->status)?'0':"'".$this->status."'").'';
 
         
         $sql.= ")";
@@ -352,7 +353,17 @@ class Projectsettlement extends CommonObject
         }
     	return $result;
     }  
-    
+            /**
+	 *  Retourne select libelle du status (actif, inactif)
+	 *
+	 *  @param	object 		$form          form object that should be created	
+      *  *  @return	string 			       html code to select status
+	 */
+	function selectLibStatut($form,$htmlname='Status')
+	{
+            global $settlmentStatusArray;
+            return $form->selectarray($htmlname,$settlmentStatusArray,$this->status);
+	}    
     /**
 	 *  Retourne le libelle du status d'un user (actif, inactif)
 	 *
@@ -373,43 +384,37 @@ class Projectsettlement extends CommonObject
 	 */
 	static function LibStatut($status,$mode=0)
 	{
-		global $langs;
+		global $langs,$settlmentStatusPictoArray,$settlmentStatusArray;
 
+                if($status=="")$status=0;
 		if ($mode == 0)
 		{
 			$prefix='';
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($settlmentStatusArray[$status]);
 		}
 		if ($mode == 1)
 		{
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+			return $langs->trans($settlmentStatusArray[$status]);
 		}
 		if ($mode == 2)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+			 return img_picto($settlmentStatusArray[$status],$settlmentStatusPictoArray[$status]).' '.$langs->trans($settlmentStatusArray[$status]);
 		}
 		if ($mode == 3)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5');
+			 return img_picto($settlmentStatusArray[$status],$settlmentStatusPictoArray[$status]);
 		}
 		if ($mode == 4)
 		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
+			 return img_picto($settlmentStatusArray[$status],$settlmentStatusPictoArray[$status]).' '.$langs->trans($settlmentStatusArray[$status]);
 		}
 		if ($mode == 5)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($settlmentStatusArray[$status]).' '.img_picto($settlmentStatusArray[$status],$settlmentStatusPictoArray[$status]);
 		}
 		if ($mode == 6)
 		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
+			 return $langs->trans($settlmentStatusArray[$status]).' '.img_picto($settlmentStatusArray[$status],$settlmentStatusPictoArray[$status]);
 		}
 	}
 
@@ -565,20 +570,57 @@ class Projectsettlement extends CommonObject
      */    
     function setSQLfields($user){
         $sql='';
-        
-		$sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
-		$sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
-		$sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
-		$sql.=' description='.(empty($this->description)!=0 ? 'null':"'".$this->db->escape($this->description)."'").',';
-		$sql.=' date_settlement='.(dol_strlen($this->date_settlement)!=0 ? "'".$this->db->idate($this->date_settlement)."'":'null').',';
-		$sql.=' date_modification=NOW() ,';
-		$sql.=' fk_user_modif="'.$user->id.'",';
-		$sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").',';
-		$sql.=' status='.(empty($this->status)!=0 ? 'null':"'".$this->status."'").'';
+        $sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
+        $sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
+        $sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
+        $sql.=' description='.(empty($this->description)!=0 ? 'null':"'".$this->db->escape($this->description)."'").',';
+        $sql.=' date_settlement='.(dol_strlen($this->date_settlement)!=0 ? "'".$this->db->idate($this->date_settlement)."'":'null').',';
+        $sql.=' date_modification=NOW() ,';
+        $sql.=' fk_user_modif="'.$user->id.'",';
+        $sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").',';
+        $sql.=' status='.(empty($this->status)!=0 ? '0':"'".$this->status."'").'';
 
-        
         return $sql;
     }
+    /*Funciton to generate the settlement details
+     * 
+     */
+    function generateSettlementDet(){
+        // Select the cost that are not yet covered by a Settlement for the project
+        $sql="SELECT pcl.amount,pcl.vat_amount, SUM(psd.amount) as sent_ammout,SUM(psd.vat_amount) as sent_vat, pcl.date_start, pcl.date_end, ";
+        $sql.= "pcl.rowid,pcl.status,pcl.fk_project"; // GROUP and WHERE
+        $sql.= " pcl.fk_c_project_cost_type";//join from cost type
+        $sql.= " FROM ".MAIN_DB_PREFIX."project_cost_line as pcl";
+        $sql.= " LEFT JOIN  ".MAIN_DB_PREFIX."project_settlement_det as psd";
+        $sql.= " WHERE  pcl.fk_project='".$this->project."' AND pcl.status='1'";
+        $sql.= " AND  pcl.date_start<'".$this->db->idate($this->date_settlement)."'";
+        $sql.= " GROUP BY pcl.rowid   "; 
+        $resql=$db->query($sql);
+        $detArray=array();
+        if ($resql)
+        {
+            $i=0;
+            $num = $db->num_rows($resql);
+            while ($i < $num )
+             {
+                $obj = $db->fetch_object($resql);
+                if ($obj)
+                {
+                    $date_start=$this->db->jdate($obj->date_start);
+                    $date_stop=$this->db->jdate($obj->date_stop);
+                    $cost_ended=($date_stop<$this->date_settlement);
+                    $prorata=$cost_ended?1:($this->date_settlement-$date_start)/($date_stop-$date_start);                  
+                    $detArray[$i]=new Projectsettlementdet($this->db);
+                    $detArray[$i]->settlement=$this->id;
+                    $detArray[$i]->project_cost_line=$obj->rowid;
+                    $detArray[$i]->amount=$obj->amount*$prorata - $obj->sent_amount;
+                    $detArray[$i]->c_project_cost_type=$obj->fk_c_project_cost_type; // FIXME cost type should be enough
+                    $detArray[$i]->vat_amount=$obj->vat_amount*$prorata - $obj->sent_vat;
+                    //if there is no amount then clear the record
+                    if($detArray[$i]->amount==0 && $detArray[$i]->amount_vat==0)unset($detArray[$i]);
+                }
+             }
+        }
 
-
+    }
 }

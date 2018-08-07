@@ -39,32 +39,27 @@
 
 // Change this following line to use the correct relative path (../, ../../, etc)
 include 'core/lib/includeMain.lib.php';
-// Change this following line to use the correct relative path from htdocs
-//include_once(DOL_DOCUMENT_ROOT.'/core/class/formcompany.class.php');
-//require_once 'lib/project_cost.lib.php';
 require_once 'class/paymentproject.class.php';
 require_once 'core/lib/generic.lib.php';
 require_once 'core/lib/paymentproject.lib.php';
 dol_include_once('/core/lib/functions2.lib.php');
-//document handling
-dol_include_once('/core/lib/files.lib.php');
 //dol_include_once('/core/lib/images.lib.php');
-dol_include_once('/core/class/html.formfile.class.php');
-// include conditionnally of the dolibarr version
-//if((version_compare(DOL_VERSION, "3.8", "<"))){
 dol_include_once('/project_cost/lib/project_cost.lib.php');
-//}
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 dol_include_once('/core/class/html.formother.class.php');
 $PHP_SELF=$_SERVER['PHP_SELF'];
 // Load traductions files requiredby by page
 //$langs->load("companies");
+$langs->load("compta");
+$langs->load("banks");
+$langs->load("bills");
 $langs->load("paymentproject@project_cost");
 
 // Get parameter
 $id			= GETPOST('id','int');
-$ref                    = GETPOST('ref','alpha');
+//$ref                    = GETPOST('ref','alpha');
 $action		= GETPOST('action','alpha');
 $backtopage = GETPOST('backtopage');
 $cancel=GETPOST('cancel');
@@ -72,34 +67,6 @@ $confirm=GETPOST('confirm');
 $tms= GETPOST('tms','alpha');
 $projectid=GETPOST('Projectid','int');
 //// Get parameters
-/*
-$sortfield = GETPOST('sortfield','alpha'); 
-$sortorder = GETPOST('sortorder','alpha')?GETPOST('sortorder','alpha'):'ASC';
-$removefilter=isset($_POST["removefilter_x"]) || isset($_POST["removefilter"]);
-//$applyfilter=isset($_POST["search_x"]) ;//|| isset($_POST["search"]);
-if (!$removefilter )		// Both test must be present to be compatible with all browsers
-{
-    	$ls_ref= GETPOST('ls_ref','alpha');
-	$ls_label= GETPOST('ls_label','alpha');
-	$ls_amount= GETPOST('ls_amount','int');
-	$ls_datep_month= GETPOST('ls_datep_month','int');
-	$ls_datep_year= GETPOST('ls_datep_year','int');
-	$ls_datev_month= GETPOST('ls_datev_month','int');
-	$ls_datev_year= GETPOST('ls_datev_year','int');
-	$ls_project= GETPOST('ls_project','int');
-	$ls_soc= GETPOST('ls_soc','int');
-	$ls_typepayment= GETPOST('ls_typepayment','int');
-	$ls_bank= GETPOST('ls_bank','int');
-	$ls_import_key= GETPOST('ls_import_key','alpha');
-
-    
-}
-*/
-
-
-
-
-
 
  // uncomment to avoid resubmision
 //if(isset( $_SESSION['paymentproject_class'][$tms]))
@@ -129,21 +96,11 @@ if($id>0)
 {
     $object->id=$id; 
     $object->fetch($id);
-    $ref=dol_sanitizeFileName($object->ref);
+    //$ref=dol_sanitizeFileName($object->ref);
     if(empty($action))$action='view'; //  the doc handling part send back only the ID without actions
     if($projectid<1){
         $projectid=$object->project;
     }
-}else if(!empty($ref))
-{
-    $object->ref=$ref; 
-    $object->id=$id; 
-    $object->fetch($id);
-    $ref=dol_sanitizeFileName($object->ref);
-        if($projectid<1){
-        $projectid=$object->project;
-    }
-
 }else if (empty($projectid)){
     setEventMessage( $langs->trans('noProjectIdPresent').' id:'.$id,'errors');
 }
@@ -166,18 +123,44 @@ if ($cancel){
             $action=($action=='add')?'create':'view';
     }
     //retrive the data
-    		$object->ref=GETPOST('Ref');
+    		//$object->ref=GETPOST('Ref');
 		$object->label=GETPOST('Label');
 		$object->amount=GETPOST('Amount');
 		$object->datep=dol_mktime(0, 0, 0,GETPOST('Datepmonth'),GETPOST('Datepday'),GETPOST('Datepyear'));
 		$object->datev=dol_mktime(0, 0, 0,GETPOST('Datevmonth'),GETPOST('Datevday'),GETPOST('Datevyear'));
 		$object->project=GETPOST('Projectid');
 		$object->soc=GETPOST('Soc');
-		$object->typepayment=GETPOST('Typepayment');
+		$object->typepayment=dol_getIdFromCode($db, GETPOST("Typepayment", 'alpha'), 'c_paiement');
 		$object->bank=GETPOST('Bank');
+                $object->num_payment=GETPOST('Numpayment');
 		$object->import_key=GETPOST('Importkey');
 
-    
+ 	if (empty($object->datep))
+	{
+		setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("Date")), null, 'errors');
+		$error++;
+	}
+	if (empty($object->project) || $object->project < 0)
+	{
+		setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("Project")), null, 'errors');
+		$error++;
+	}
+	if (empty($object->typepayment) || $object->typepayment < 0)
+	{
+		setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("PaymentMode")), null, 'errors');
+		$error++;
+	}
+	if (empty($object->amount))
+	{
+		setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("Amount")), null, 'errors');
+		$error++;
+	}
+	if (! empty($conf->banque->enabled) && ! $object->bank > 0)
+	{
+		setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentitiesnoconv("BankAccount")), null, 'errors');
+		$error++;
+	}  
+        
 
 // test here if the post data is valide
  /*
@@ -215,20 +198,18 @@ if ($cancel){
         }
         $action='view';
     case 'delete':
-        if(isset($_GET['urlfile'])) $action='deletefile';
     case 'view':
     case 'viewinfo':
     case 'edit':
         // fetch the object data if possible
-        if ($id > 0 || !empty($ref) )
+        if ($id > 0  )
         {
-            $result=$object->fetch($id,$ref);
+            $result=$object->fetch($id,'');
             if ($result < 0){ 
                 dol_print_error($db);
             }else { // fill the id & ref
                 if(isset($object->id))$id = $object->id;
-                if(isset($object->rowid))$id = $object->rowid;
-                if(isset($object->ref))$ref = $object->ref;
+
             }
 
         }else
@@ -245,6 +226,7 @@ if ($cancel){
             // remove the tms
                unset($_SESSION['Paymentproject'][$tms]);
                setEventMessage('RecordSucessfullyCreated', 'mesgs');
+               
                PaymentprojectReloadPage($backtopage,$projectid,$result,'');
 
         }else
@@ -256,19 +238,27 @@ if ($cancel){
         }                            
         break;
      case 'confirm_delete':
-
+	if ($object->rappro == 0) // FIXME RAPPRO never set
+	{
+    
             $result=($confirm=='yes')?$object->delete($user):0;
             if ($result > 0)
             {
                 // Delete OK
                 setEventMessage($langs->trans('RecordDeleted'), 'mesgs');
+
+
             }
             else
             {
                 // Delete NOK
                 if (! empty($object->errors)) setEventMessages(null,$object->errors,'errors');
                 else setEventMessage('RecordNotDeleted','errors');
+
             }
+        }else{
+		setEventMessages('Error try do delete a line linked to a conciliated bank transaction', null, 'errors');
+        }
             PaymentprojectReloadPage($backtopage,$projectid, 0, '');
          break;
 
@@ -280,7 +270,7 @@ if(isset( $_SESSION['Paymentproject'][$tms]))
 {
     unset($_SESSION['Paymentproject'][$tms]);
 }
-if(($action == 'create') || ($action == 'edit' && ($id>0 || !empty($ref)))){
+if(($action == 'create') || ($action == 'edit' && ($id>0 ))){
     $tms=getToken();
     $_SESSION['Paymentproject'][$tms]=array();
     $_SESSION['Paymentproject'][$tms]['action']=$action;
@@ -322,7 +312,7 @@ switch ($action) {
     case 'edit':
         $edit=1;
    case 'delete';
-        if( $action=='delete' && ($id>0 || $ref!="")){
+        if( $action=='delete' && ($id>0 )){
          $ret=$form->form_confirm($PHP_SELF.'?action=confirm_delete&id='.$id,$langs->trans('DeletePaymentproject'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background\
@@ -367,23 +357,13 @@ switch ($action) {
         
 		print "<tr>\n";
 
-// show the field ref
-
-		print '<td class="fieldrequired">'.$langs->trans('Ref').' </td><td>';
-		if($edit==1){
-			print '<input type="text" value="'.$object->ref.'" name="Ref">';
-		}else{
-			print $object->ref;
-		}
-		print "</td>";
-		print "\n</tr>\n";
-		print "<tr>\n";
 
 // show the field label
 
-		print '<td>'.$langs->trans('Label').' </td><td>';
+		print '<td>'.fieldLabel('Label','label',1).' </td><td>';
 		if($edit==1){
-			print '<input type="text" value="'.$object->label.'" name="Label">';
+                        if($object->label=="")$object->label=$langs->trans("ProjectPayment");
+			print '<input name="Label" id="label" class="minwidth300" value="'.$object->label.'" name="Label">';
 		}else{
 			print $object->label;
 		}
@@ -393,11 +373,11 @@ switch ($action) {
 
 // show the field amount
 
-		print '<td>'.$langs->trans('Amount').' </td><td>';
+		print '<td>'.fieldLabel('Amount','amount',1).' </td><td>';
 		if($edit==1){
-			print '<input type="text" value="'.$object->amount.'" name="Amount">';
+			print '<input name="Amount" id="amount" class="minwidth100" value="'.$object->amount.'" name="Amount">';
 		}else{
-			print $object->amount;
+			print price($object->amount,0,$outputlangs,1,-1,-1,$conf->currency);
 		}
 		print "</td>";
 		print "\n</tr>\n";
@@ -405,10 +385,10 @@ switch ($action) {
 
 // show the field datep
 
-		print '<td class="fieldrequired">'.$langs->trans('Datep').' </td><td>';
+		print '<td class="fieldrequired">'.fieldLabel('DatePayment','datep',1).' </td><td>';
 		if($edit==1){
 		if($new==1){
-			print $form->select_date(-1,'Datep');
+			print $form->select_date($object->datep,'Datep');
 		}else{
 			print $form->select_date($object->datep,'Datep');
 		}
@@ -421,10 +401,10 @@ switch ($action) {
 
 // show the field datev
 
-		print '<td>'.$langs->trans('Datev').' </td><td>';
+		print '<td>'.fieldLabel('DateValue','datev',1).' </td><td>';
 		if($edit==1){
 		if($new==1){
-			print $form->select_date(-1,'Datev');
+			print $form->select_date($object->datev,'Datev');
 		}else{
 			print $form->select_date($object->datev,'Datev');
 		}
@@ -438,14 +418,14 @@ switch ($action) {
 
 // show the field soc
 
-		print '<td class="fieldrequired">'.$langs->trans('Soc').' </td><td>';
+		print '<td class="fieldrequired">'.$langs->trans('Stakeholder').' </td><td>';
 		$sql_soc=array('table'=> 'societe','keyfield'=> 'rowid','fields'=>'ref_int,nom', 'join' => '', 'where'=>'','tail'=>'');
 		$html_soc=array('name'=>'Soc','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
 		$addChoicessoc=null;
 		if($edit==1){
 		print select_sellist($sql_soc,$html_soc, $object->soc,$addChoices_soc );
 		}else{
-		print_sellist($sql_soc,$object->soc,'-');		}
+		print print_sellist($sql_soc,$object->soc,'-');		}
 		print "</td>";
 		print "\n</tr>\n";
 		print "<tr>\n";
@@ -457,25 +437,38 @@ switch ($action) {
 		$html_typepayment=array('name'=>'Typepayment','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
 		$addChoicestypepayment=null;
 		if($edit==1){
-		print select_sellist($sql_typepayment,$html_typepayment, $object->typepayment,$addChoices_typepayment );
+		print $form->select_types_paiements($object->typepayment, "Typepayment", '', 2);
 		}else{
-		print_sellist($sql_typepayment,$object->typepayment,'-');		}
+		print print_sellist($sql_typepayment,$object->typepayment,'-');		}
 		print "</td>";
 		print "\n</tr>\n";
-		print "<tr>\n";
+
 
 // show the field bank
+	if (! empty($conf->banque->enabled))
+	{
+		//print '<td>'.fieldLabel('BankAccount','selectaccountid',1).' </td><td>';
 
-		print '<td>'.$langs->trans('Bank').' </td><td>';
-		$sql_bank=array('table'=> 'bank_account','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
-		$html_bank=array('name'=>'Bank','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
-		$addChoicesbank=null;
-		if($edit==1){
-		print select_sellist($sql_bank,$html_bank, $object->bank,$addChoices_bank );
+		if($edit==1 && $new=1){
+		print $form->select_comptes($object->bank,"Bank",0,'',1); // not editable 
 		}else{
-		print_sellist($sql_bank,$object->bank,'-');		}
-		print "</td>";
-		print "\n</tr>\n";
+		if ($object->bank> 0)
+		{
+			$bankline=new AccountLine($db);
+			$bankline->fetch($object->bank);
+
+			print '<tr>';
+			print '<td>'.$langs->trans('BankTransactionLine').'</td>';
+			print '<td>';
+			print $bankline->getNomUrl(1,0,'showall');
+			print '</td>';
+			print '</tr>';
+		}		
+                
+                
+                }
+
+        }
 
 
         
@@ -508,7 +501,7 @@ switch ($action) {
                 
                 //if ($user->rights->Paymentproject->delete)
                 //{
-                    print '<a class="butActionDelete" href="'.$PHP_SELF.'?id='.$id.'&action=delete">'.$langs->trans('Delete').'</a>';
+                    print '<a class="butActionDelete" href="'.$PHP_SELF.'?id='.$id.'&action=delete&Projectid='.$projectid.'">'.$langs->trans('Delete').'</a>';
                 //}
                 //else
                 //{
@@ -531,7 +524,7 @@ switch ($action) {
         break;
 
     case 'delete':
-        if( ($id>0 || $ref!='')){
+        if( ($id>0 )){
          $ret=$form->form_confirm($PHP_SELF.'?action=confirm_delete&id='.$id,$langs->trans('DeletePaymentproject'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background        

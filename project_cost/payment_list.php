@@ -47,6 +47,7 @@ require_once 'core/lib/paymentproject.lib.php';
 dol_include_once('/core/lib/functions2.lib.php');
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 //document handling
 dol_include_once('/core/lib/files.lib.php');
 //dol_include_once('/core/lib/images.lib.php');
@@ -63,7 +64,7 @@ $langs->load("paymentproject@project_cost");
 
 // Get parameter
 $id			= GETPOST('id','int');
-$ref                    = GETPOST('ref','alpha');
+
 $action		= GETPOST('action','alpha');
 $backtopage = GETPOST('backtopage');
 $cancel=GETPOST('cancel');
@@ -77,7 +78,7 @@ $removefilter=isset($_POST["removefilter_x"]) || isset($_POST["removefilter"]);
 //$applyfilter=isset($_POST["search_x"]) ;//|| isset($_POST["search"]);
 if (!$removefilter )		// Both test must be present to be compatible with all browsers
 {
-    	$ls_ref= GETPOST('ls_ref','alpha');
+
 	$ls_label= GETPOST('ls_label','alpha');
 	$ls_amount= GETPOST('ls_amount','int');
 	$ls_datep_month= GETPOST('ls_datep_month','int');
@@ -128,20 +129,7 @@ if ($user->societe_id > 0 ||
 
 // create object and set id or ref if provided as parameter
 $object=new Paymentproject($db);
-if($id>0)
-{
-    $object->id=$id; 
-    $object->fetch($id);
-    $ref=dol_sanitizeFileName($object->ref);
-}
-if(!empty($ref))
-{
-    $object->ref=$ref; 
-    $object->id=$id; 
-    $object->fetch($id,$ref);
-    $ref=dol_sanitizeFileName($object->ref);
-    
-}
+
 
 
 /*******************************************************************
@@ -168,7 +156,7 @@ if(!empty($ref))
        }
        break;
     case 'delete':
-        if( $action=='delete' && ($id>0 || $ref!="")){
+        if( $action=='delete' && ($id>0 )){
          $ret=$form->form_confirm(dol_buildpath('/project_cost/spread_card.php',1).'?action=confirm_delete&id='.$id,$langs->trans('DeletePaymentproject'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background\
@@ -213,7 +201,7 @@ jQuery(document).ready(function() {
     $sql = 'SELECT';
     $sql.= ' t.rowid,';
     
-		$sql.=' t.ref,';
+	
 		$sql.=' t.label,';
 		$sql.=' t.amount,';
 		$sql.=' t.datep,';
@@ -239,7 +227,7 @@ jQuery(document).ready(function() {
             }
     }
     //pass the search criteria
-    	if($ls_ref) $sqlwhere .= natural_search('t.ref', $ls_ref);
+  
 	if($ls_label) $sqlwhere .= natural_search('t.label', $ls_label);
 	if($ls_amount) $sqlwhere .= natural_search(array('t.amount'), $ls_amount);
 	if($ls_datep_month)$sqlwhere .= ' AND MONTH(t.datep)="'.$ls_datep_month."'";
@@ -279,10 +267,10 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     $resql=$db->query($sql);
     if ($resql)
     {
-        $param='';
+        $param='&Projectid='.$projectid;
         if (! empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param.='&contextpage='.urlencode($contextpage);
         if ($limit > 0 && $limit != $conf->liste_limit) $param.='&limit='.urlencode($limit);
-        	if (!empty($ls_ref))	$param.='&ls_ref='.urlencode($ls_ref);
+        
 	if (!empty($ls_label))	$param.='&ls_label='.urlencode($ls_label);
 	if (!empty($ls_amount))	$param.='&ls_amount='.urlencode($ls_amount);
 	if (!empty($ls_datep_month))	$param.='&ls_datep_month='.urlencode($ls_datep_month);
@@ -305,9 +293,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         print '<table class="liste" width="100%">'."\n";
         //TITLE
         print '<tr class="liste_titre">';
-        	print_liste_field_titre($langs->trans('Ref'),$PHP_SELF,'t.ref','',$param,'',$sortfield,$sortorder);
-	print "\n";
-	print_liste_field_titre($langs->trans('Label'),$PHP_SELF,'t.label','',$param,'',$sortfield,$sortorder);
+   	print_liste_field_titre($langs->trans('Label'),$PHP_SELF,'t.label','',$param,'',$sortfield,$sortorder);
 	print "\n";
 	print_liste_field_titre($langs->trans('Amount'),$PHP_SELF,'t.amount','',$param,'',$sortfield,$sortorder);
 	print "\n";
@@ -320,17 +306,17 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 	print "\n";
 	print_liste_field_titre($langs->trans('Typepayment'),$PHP_SELF,'t.fk_typepayment','',$param,'',$sortfield,$sortorder);
 	print "\n";
-	print_liste_field_titre($langs->trans('Bank'),$PHP_SELF,'t.fk_bank','',$param,'',$sortfield,$sortorder);
-	print "\n";
+        if (! empty($conf->banque->enabled))
+	{
+            print_liste_field_titre($langs->trans('Bankentry'),$PHP_SELF,'t.fk_bank','',$param,'',$sortfield,$sortorder);
+            print "\n";
+        }
 
         
         print '</tr>';
         //SEARCH FIELDS
         print '<tr class="liste_titre">'; 
-        //Search field forref
-	print '<td class="liste_titre" colspan="1" >';
-	print '<input class="flat" size="16" type="text" name="ls_ref" value="'.$ls_ref.'">';
-	print '</td>';
+
 //Search field forlabel
 	print '<td class="liste_titre" colspan="1" >';
 	print '<input class="flat" size="16" type="text" name="ls_label" value="'.$ls_label.'">';
@@ -367,12 +353,12 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 		print select_sellist($sql_typepayment,$html_typepayment, $ls_typepayment,$addChoices_typepayment );
 	print '</td>';
 //Search field forbank
-	print '<td class="liste_titre" colspan="1" >';
-		$sql_bank=array('table'=> 'bank_account','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
-		$html_bank=array('name'=>'$ls_bank','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
-		$addChoicesbank=null;
-		print select_sellist($sql_bank,$html_bank, $ls_bank,$addChoices_bank );
+        if (! empty($conf->banque->enabled))
+	{
+            print '<td class="liste_titre" colspan="1" >';
+// not possible to search 
 	print '</td>';
+        }
 
         
         
@@ -391,14 +377,24 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
                 // You can use here results
                 		print "<tr class=\"oddeven')\"  onclick=\"location.href='";
 	print $basedurl.$obj->rowid."'\" >";
-		print "<td>".$object->getNomUrl($obj->ref,'',$obj->ref,0)."</td>";
+
 		print "<td>".$obj->label."</td>";
 		print "<td>".$obj->amount."</td>";
 		print "<td>".dol_print_date($obj->datep,'day')."</td>";
 		print "<td>".dol_print_date($obj->datev,'day')."</td>";
 		print "<td>".print_generic('societe','rowid',$obj->fk_soc,'rowid','ref_int,nom')."</td>";
 		print "<td>".print_generic('c_paiement','id',$obj->fk_typepayment,'id','libelle')."</td>";
-		print "<td>".print_generic('bank_account','rowid',$obj->fk_bank,'rowid','ref,label')."</td>";
+		if (! empty($conf->banque->enabled))
+                {
+                    print '<td>';
+                        if ($obj->fk_bank> 0)
+                        {
+                                $bankline=new AccountLine($db);
+                                $bankline->fetch($obj->fk_bank);
+                                print $bankline->getNomUrl(1,0,'showall');
+                        }		
+                        print '</td>';
+                }
 		print '<td><a href="payment_card.php?action=delete&id='.$obj->rowid.'">'.img_delete().'</a></td>';
 		print "</tr>";
 

@@ -12,15 +12,9 @@ One application is the management of condominium
 Main developers: Patrick Delcroix
 
 # development backlog:
-- add start en end date to spread
-- finish the pages for the cost lines
-- create the third partie balance view
-- create the cost distibution invoicing
-- create the admin page
-- create the REF rules (x2)
-- create the balance pdf
-
-# Functionnalities (to be)
-- manage spread rules between the the third parties involved in a project
-- add invoice or cost/fees to the project on the relevant spread group
-- invoice those cost to the project third parties based on spread rules attached to each cost
+- (workarround in place, only manual cost is displayed)do some tab for the cost to prevent adding an invoice and some procust / cost and manage the related js/php to fill correctly the db
+- manage properly the status
+- add 3 ratio for the project spread and then the mode will decide wich ration to use
+- manage statement for one sigle stake holder ( leave)ps
+- manage extrafiels in card/list
+- header of list (asc/dec sorting) must take the projectid into account

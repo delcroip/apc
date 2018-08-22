@@ -250,7 +250,7 @@ if ($cancel){
         }                            
         break;
      case 'generate_det':
-          $object->generateSettlementDet();
+          $object->generateSettlementDet($user);
           ProjectsettlementReloadPage($backtopage,$projectid,$object->id,'');
 
           break;

@@ -135,7 +135,7 @@ class Projectcostline extends CommonObject
 		$sql.=' NOW() ,';
                 $sql.=' '.(empty($this->date_start) || dol_strlen($this->date_start)==0?'NULL':"'".$this->db->idate($this->date_start)."'").',';
 		$sql.=' '.(empty($this->date_end) || dol_strlen($this->date_end)==0?'NULL':"'".$this->db->idate($this->date_end)."'").',';
-		$sql.=' "'.$user->id.'",';
+		$sql.='\''.$user->id.'\',';
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").',';
 		$sql.=' '.(empty($this->status)?'0':"'".$this->status."'").',';
 		$sql.=' '.(empty($this->project)?'NULL':"'".$this->project."'").',';

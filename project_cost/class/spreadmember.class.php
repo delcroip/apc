@@ -102,7 +102,7 @@ class Projectcostspreadmember extends CommonObject
 		$sql.=' '.(empty($this->group_id)?'NULL':"'".$this->group_id."'").',';
 		$sql.=' '.(empty($this->member_id)?'NULL':"'".$this->member_id."'").',';
 		$sql.=' NOW() ,';
-		$sql.=' "'.$user->id.'"';
+		$sql.='\''.$user->id.'\',';
 
         
         $sql.= ")";

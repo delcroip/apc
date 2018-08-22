@@ -114,7 +114,7 @@ class Projectsettlementdet extends CommonObject
 		$sql.=' '.(empty($this->c_project_cost_type)?'NULL':"'".$this->c_project_cost_type."'").',';
                 $sql.=' '.(empty($this->vat_amount)?'NULL':"'".$this->vat_amount."'").',';
 		$sql.=' NOW() ,';
-		$sql.=' "'.$user->id.'",';
+		$sql.=" '".$user->id."',";
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").'';
 
         
@@ -168,12 +168,11 @@ class Projectsettlementdet extends CommonObject
      *  @param	string	$ref	Ref
      *  @return int          	<0 if KO, >0 if OK
      */
-    function fetch($id,$ref='')
+    function fetch($id,$ref='',$settelmentId)
     {
     	global $langs;
         $sql = "SELECT";
-        $sql.= " t.rowid,";
-        
+        $sql.= " t.rowid,";       
         $sql.=' t.fk_settlement,';
         $sql.=' t.fk_project_cost_line,';
         $sql.=' t.amount,';
@@ -183,33 +182,37 @@ class Projectsettlementdet extends CommonObject
         $sql.=' t.date_modification,';
         $sql.=' t.fk_user_creat,';
         $sql.=' t.fk_user_modif,';
-        $sql.=' t.import_key';
-
-        
+        $sql.=' t.import_key';     
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
-        if ($ref) $sql.= " WHERE t.ref = '".$ref."'";
+        if ($settelmentId) $sql.= " WHERE fk_settlement = '".$settelmentId."'";
+        else if ($ref) $sql.= " WHERE t.ref = '".$ref."'";
         else $sql.= " WHERE t.rowid = ".$id;
     	dol_syslog(get_class($this)."::fetch");
         $resql=$this->db->query($sql);
+        $resArray=array();
         if ($resql)
         {
-            if ($this->db->num_rows($resql))
-            {
+            $i=0;
+            $num=$this->db->num_rows($resql);
+            while($i<$num){
                 $obj = $this->db->fetch_object($resql);
-                $this->id    = $obj->rowid;
-                
-                $this->settlement = $obj->fk_settlement;
-                $this->project_cost_line = $obj->fk_project_cost_line;
-                $this->amount = $obj->amount;
-                $this->c_project_cost_type = $obj->c_project_cost_type;
-                $this->vat_amount = $obj->vat_amount;
-                $this->date_creation = $this->db->jdate($obj->date_creation);
-                $this->date_modification = $this->db->jdate($obj->date_modification);
-                $this->user_creat = $obj->fk_user_creat;
-                $this->user_modif = $obj->fk_user_modif;
-                $this->import_key = $obj->import_key;
+                if ($obj)
+                {
+                    
+                    $this->id    = $obj->rowid;               
+                    $this->settlement = $obj->fk_settlement;
+                    $this->project_cost_line = $obj->fk_project_cost_line;
+                    $this->amount = $obj->amount;
+                    $this->c_project_cost_type = $obj->c_project_cost_type;
+                    $this->vat_amount = $obj->vat_amount;
+                    $this->date_creation = $this->db->jdate($obj->date_creation);
+                    $this->date_modification = $this->db->jdate($obj->date_modification);
+                    $this->user_creat = $obj->fk_user_creat;
+                    $this->user_modif = $obj->fk_user_modif;
+                    $this->import_key = $obj->import_key;
+                    
 
-                
+                }
             }
             $this->db->free($resql);
 
@@ -566,6 +569,13 @@ class Projectsettlementdet extends CommonObject
 
         
         return $sql;
+    }
+    /* Function to return the array of det.
+     * 
+     */
+    function getSettlementDet(){
+
+        
     }
 
 

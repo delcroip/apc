@@ -118,7 +118,7 @@ class Projectsettlement extends CommonObject
 		$sql.=' '.(empty($this->description)?'NULL':"'".$this->db->escape($this->description)."'").',';
 		$sql.=' '.(empty($this->date_settlement) || dol_strlen($this->date_settlement)==0?'NULL':"'".$this->db->idate($this->date_settlement)."'").',';
 		$sql.=' NOW() ,';
-		$sql.=' "'.$user->id.'",';
+		$sql.='\''.$user->id.'\',';
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").',';
 		$sql.=' '.(empty($this->status)?'0':"'".$this->status."'").'';
 
@@ -205,18 +205,18 @@ class Projectsettlement extends CommonObject
                 $obj = $this->db->fetch_object($resql);
                 $this->id    = $obj->rowid;
                 
-				$this->ref = $obj->ref;
-				$this->entity = $obj->entity;
-				$this->label = $obj->label;
-				$this->project = $obj->fk_project;
-				$this->description = $obj->description;
-				$this->date_settlement = $this->db->jdate($obj->date_settlement);
-				$this->date_creation = $this->db->jdate($obj->date_creation);
-				$this->date_modification = $this->db->jdate($obj->date_modification);
-				$this->user_creat = $obj->fk_user_creat;
-				$this->user_modif = $obj->fk_user_modif;
-				$this->import_key = $obj->import_key;
-				$this->status = $obj->status;
+                $this->ref = $obj->ref;
+                $this->entity = $obj->entity;
+                $this->label = $obj->label;
+                $this->project = $obj->fk_project;
+                $this->description = $obj->description;
+                $this->date_settlement = $this->db->jdate($obj->date_settlement);
+                $this->date_creation = $this->db->jdate($obj->date_creation);
+                $this->date_modification = $this->db->jdate($obj->date_modification);
+                $this->user_creat = $obj->fk_user_creat;
+                $this->user_modif = $obj->fk_user_modif;
+                $this->import_key = $obj->import_key;
+                $this->status = $obj->status;
 
                 
             }
@@ -585,42 +585,50 @@ class Projectsettlement extends CommonObject
     /*Funciton to generate the settlement details
      * 
      */
-    function generateSettlementDet(){
+    function generateSettlementDet($userin){
+        global $user;
+        if(!is_object($userin))$userin=user;
         // Select the cost that are not yet covered by a Settlement for the project
-        $sql="SELECT pcl.amount,pcl.vat_amount, SUM(psd.amount) as sent_ammout,SUM(psd.vat_amount) as sent_vat, pcl.date_start, pcl.date_end, ";
-        $sql.= "pcl.rowid,pcl.status,pcl.fk_project"; // GROUP and WHERE
-        $sql.= " pcl.fk_c_project_cost_type";//join from cost type
+        $sql="SELECT MAX(pcl.amount) as amount,MAX(pcl.vat_amount) as vat_amount, SUM(psd.amount) as sent_amount,SUM(psd.vat_amount) as sent_vat, MAX(pcl.date_start) as date_start, MAX(pcl.date_end)  as date_stop, ";
+        $sql.= "pcl.rowid,MAX(pcl.status) as status ,MAX(pcl.fk_project) as fk_project,"; // GROUP and WHERE
+        $sql.= " MAX(pcl.c_project_cost_type) as c_project_cost_type";//join from cost type
         $sql.= " FROM ".MAIN_DB_PREFIX."project_cost_line as pcl";
         $sql.= " LEFT JOIN  ".MAIN_DB_PREFIX."project_settlement_det as psd";
+        $sql.= " ON  psd.fk_project_cost_line = pcl.rowid";
         $sql.= " WHERE  pcl.fk_project='".$this->project."' AND pcl.status='1'";
         $sql.= " AND  pcl.date_start<'".$this->db->idate($this->date_settlement)."'";
         $sql.= " GROUP BY pcl.rowid   "; 
-        $resql=$db->query($sql);
-        $detArray=array();
+        $resql=$this->db->query($sql);
         if ($resql)
         {
             $i=0;
-            $num = $db->num_rows($resql);
+            $num = $this->db->num_rows($resql);
             while ($i < $num )
-             {
-                $obj = $db->fetch_object($resql);
+            {
+                $obj = $this->db->fetch_object($resql);
                 if ($obj)
                 {
                     $date_start=$this->db->jdate($obj->date_start);
                     $date_stop=$this->db->jdate($obj->date_stop);
                     $cost_ended=($date_stop<$this->date_settlement);
                     $prorata=$cost_ended?1:($this->date_settlement-$date_start)/($date_stop-$date_start);                  
-                    $detArray[$i]=new Projectsettlementdet($this->db);
-                    $detArray[$i]->settlement=$this->id;
-                    $detArray[$i]->project_cost_line=$obj->rowid;
-                    $detArray[$i]->amount=$obj->amount*$prorata - $obj->sent_amount;
-                    $detArray[$i]->c_project_cost_type=$obj->fk_c_project_cost_type; // FIXME cost type should be enough
-                    $detArray[$i]->vat_amount=$obj->vat_amount*$prorata - $obj->sent_vat;
+                    $det=new Projectsettlementdet($this->db);
+                    $det->settlement=$this->id;
+                    $det->project_cost_line=$obj->rowid;
+                    $det->amount=$obj->amount*$prorata - $obj->sent_amount;
+                    $det->c_project_cost_type=$obj->c_project_cost_type; // FIXME cost type should be enough
+                    $det->vat_amount=$obj->vat_amount*$prorata - $obj->sent_vat;
                     //if there is no amount then clear the record
-                    if($detArray[$i]->amount==0 && $detArray[$i]->amount_vat==0)unset($detArray[$i]);
+                    if($det->amount!=0 || $det->vat_amount!=0)$det->create($userin);
+                    $i++;
+                    
                 }
-             }
+            }
+            return 1;
         }
-
+        return -1;
     }
+    
+
+    
 }

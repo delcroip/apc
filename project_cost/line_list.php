@@ -444,7 +444,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 		print_sellist($sql_project_cost_spread,$object->project_cost_spread,'-');
                  print "</td>";
                  
-                 print "<td>".$db->jdate($obj->date_start)."</td>";
+                 print "<td>".dol_print_date($db->jdate($obj->date_start))."</td>";
                  
                 print '<td><a href="line_card.php?action=delete&id='.$obj->rowid.'">'.img_delete().'</a></td>';
 		print "</tr>";

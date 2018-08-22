@@ -131,7 +131,7 @@ class Paymentproject extends CommonObject
 		$sql.=' '.(empty($this->typepayment)?'NULL':"'".$this->typepayment."'").',';
 		$sql.=' '.(empty($this->bank)?'NULL':"'".$this->bank."'").',';
 		$sql.=' NOW() ,';
-		$sql.=' "'.$user->id.'",';
+		$sql.='\''.$user->id.'\',';
 		$sql.=' '.(empty($this->num_payment)?'NULL':"'".$this->db->escape($this->num_payment)."'").',';                
 		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").'';
 

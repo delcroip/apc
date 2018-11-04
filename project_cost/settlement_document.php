@@ -1,7 +1,6 @@
 <?php
 /* Copyright (C) 2007-2017 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2018	   Patrick DELCROIX     <pmpdelcroix@gmail.com>
- *  * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,9 +28,10 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/images.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
-require_once 'class/projectsettlement.class.php';
-require_once 'core/lib/Projectsettlement.lib.php';
-// Load traductions files requiredby by page
+require_once 'class/settlement.class.php';
+require_once 'core/lib/settlement.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';// Load traductions files requiredby by page
 $langs->loadLangs(array("Projectsettlement@project_cost","companies","other"));
 
 
@@ -39,6 +39,7 @@ $action=GETPOST('action','aZ09');
 $confirm=GETPOST('confirm');
 $id=(GETPOST('socid','int') ? GETPOST('socid','int') : GETPOST('id','int'));
 $ref = GETPOST('ref', 'alpha');
+$projectid=GETPOST('Projectid','int');
 
 // Security check - Protection if external user
 //if ($user->societe_id > 0) access_forbidden();
@@ -53,7 +54,7 @@ $pageprev = $page - 1;
 $pagenext = $page + 1;
 
 // Initialize technical objects
-$object=new projectsettlement_class($db);
+$object=new projectsettlement($db);
 $extrafields = new ExtraFields($db);
 $diroutputmassaction=$conf->project_cost->dir_output . '/temp/massgeneration/'.$user->id;
 $hookmanager->initHooks(array('Projectsettlementdocument'));     // Note that conf->hooks_modules contains array
@@ -85,7 +86,10 @@ $title=$langs->trans("Projectsettlement").' - '.$langs->trans("Files");
 $help_url='';
 //$help_url='EN:Module_Third_Parties|FR:Module_Tiers|ES:Empresas';
 llxHeader('', $title, $help_url);
-
+$project= new Project($db);
+$project->fetch($projectid);
+$headProject=project_prepare_head($project);
+dol_fiche_head($headProject, 'settlement', $langs->trans("Project"), 0, 'project');
 if ($object->id)
 {
 	/*

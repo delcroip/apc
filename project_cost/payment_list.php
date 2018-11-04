@@ -1,7 +1,7 @@
 <?php
 /* 
  * Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) ---Put here your own copyright and developer email---
+ * Copyright (C) Patrick Delcroix <pmpdelcroix@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,9 +53,7 @@ dol_include_once('/core/lib/files.lib.php');
 //dol_include_once('/core/lib/images.lib.php');
 dol_include_once('/core/class/html.formfile.class.php');
 // include conditionnally of the dolibarr version
-//if((version_compare(DOL_VERSION, "3.8", "<"))){
-        dol_include_once('/project_cost/lib/project_cost.lib.php');
-//}
+
 dol_include_once('/core/class/html.formother.class.php');
 $PHP_SELF=$_SERVER['PHP_SELF'];
 // Load traductions files requiredby by page
@@ -157,7 +155,7 @@ $object=new Paymentproject($db);
        break;
     case 'delete':
         if( $action=='delete' && ($id>0 )){
-         $ret=$form->form_confirm(dol_buildpath('/project_cost/spread_card.php',1).'?action=confirm_delete&id='.$id,$langs->trans('DeletePaymentproject'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
+         $ret=$form->form_confirm(dol_buildpath('/project_cost/share_card.php',1).'?action=confirm_delete&id='.$id,$langs->trans('DeletePaymentproject'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background\
         }
@@ -171,12 +169,15 @@ $object=new Paymentproject($db);
 ****************************************************/
 
 llxHeader('','Paymentproject','');
+print "<div> <!-- module body-->";
         $project= new Project($db);
         $project->fetch($projectid);
         $headProject=project_prepare_head($project);
          dol_fiche_head($headProject, 'payment', $langs->trans("Project"), 0, 'project');
+         print_barre_liste($langs->trans("Paymentproject"),$page,$PHP_SELF,$param,$sortfield,$sortorder,'',$num,$nbtotalofrecords);
 
-print "<div> <!-- module body-->";
+print '</div>';
+
 $form=new Form($db);
 $formother=new FormOther($db);
 $fuser=new User($db);
@@ -286,10 +287,10 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         
         $num = $db->num_rows($resql);
         //print_barre_liste function defined in /core/lib/function.lib.php, possible to add a picto
-        print_barre_liste($langs->trans("Paymentproject"),$page,$PHP_SELF,$param,$sortfield,$sortorder,'',$num,$nbtotalofrecords);
-        print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_companies', 0, '', '', $limit);
+        //print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_companies', 0, '', '', $limit);
 
         print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
+        print '<div class="div-table-responsive">';
         print '<table class="liste" width="100%">'."\n";
         //TITLE
         print '<tr class="liste_titre">';
@@ -315,7 +316,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         
         print '</tr>';
         //SEARCH FIELDS
-        print '<tr class="liste_titre">'; 
+        print '<tr class="liste_titre_filter">'; 
 
 //Search field forlabel
 	print '<td class="liste_titre" colspan="1" >';
@@ -411,6 +412,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     }
 
     print '</table>'."\n";
+    print '</div>';
     print '</form>'."\n";
     // new button
     print '<a href="payment_card.php?action=create&Projectid='.$projectid.'" class="butAction" role="button">'.$langs->trans('New');

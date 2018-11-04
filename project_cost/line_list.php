@@ -1,7 +1,7 @@
 <?php
 /* 
  * Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) ---Put here your own copyright and developer email---
+ * Copyright (C) Patrick Delcroix <pmpdelcroix@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,9 +52,7 @@ dol_include_once('/core/class/html.formfile.class.php');
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
 // include conditionnally of the dolibarr version
-//if((version_compare(DOL_VERSION, "3.8", "<"))){
-  //      dol_include_once('/project_cost/lib/project_cost.lib.php');
-//}
+
 dol_include_once('/core/class/html.formother.class.php');
 $PHP_SELF=$_SERVER['PHP_SELF'];
 // Load traductions files requiredby by page
@@ -88,7 +86,7 @@ if (!$removefilter )		// Both test must be present to be compatible with all bro
 	$ls_product= GETPOST('ls_product','int');
 	$ls_supplier_invoice= GETPOST('ls_supplier_invoice','int');
 	$ls_c_project_cost_type= GETPOST('ls_c_project_cost_type','int');
-	$ls_project_cost_spread= GETPOST('ls_project_cost_spread','int');
+	$ls_project_cost_share= GETPOST('ls_project_cost_share','int');
 
     
 }
@@ -172,7 +170,7 @@ if(!empty($ref))
        break;
     case 'delete':
         if( $action=='delete' && ($id>0 || $ref!="")){
-         $ret=$form->form_confirm(dol_buildpath('/project_cost/spread_card.php',1).'?action=confirm_delete&id='.$id,$langs->trans('DeleteProjectcostline'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
+         $ret=$form->form_confirm(dol_buildpath('/project_cost/share_card.php',1).'?action=confirm_delete&id='.$id,$langs->trans('DeleteProjectcostline'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background\
         }
@@ -186,12 +184,15 @@ if(!empty($ref))
 ****************************************************/
 
 llxHeader('','Projectcostline','');
+print "<div> <!-- module body-->";
         $project= new Project($db);
         $project->fetch($projectid);
         $headProject=project_prepare_head($project);
-         dol_fiche_head($headProject, 'costs', $langs->trans("Project"), 0, 'project');
+        dol_fiche_head($headProject, 'costs', $langs->trans("Project"), 0, 'project');
+        print_barre_liste($langs->trans("Projectcostline"),$page,$PHP_SELF,$param,$sortfield,$sortorder,'',$num,$nbtotalofrecords);
 
-print "<div> <!-- module body-->";
+
+print '</div>';
 $form=new Form($db);
 $formother=new FormOther($db);
 $fuser=new User($db);
@@ -229,7 +230,7 @@ jQuery(document).ready(function() {
 		$sql.=' t.fk_product,';
 		$sql.=' t.fk_supplier_invoice,';
 		$sql.=' t.c_project_cost_type,';
-		$sql.=' t.fk_project_cost_spread';
+		$sql.=' t.fk_project_cost_share';
 
     
     $sql.= ' FROM '.MAIN_DB_PREFIX.'project_cost_line as t';
@@ -257,7 +258,7 @@ jQuery(document).ready(function() {
 	if($ls_product) $sqlwhere .= natural_search(array('t.fk_product'), $ls_product);
 	if($ls_supplier_invoice) $sqlwhere .= natural_search(array('t.fk_supplier_invoice'), $ls_supplier_invoice);
 	if($ls_c_project_cost_type) $sqlwhere .= natural_search(array('t.c_project_cost_type'), $ls_c_project_cost_type);
-	if($ls_project_cost_spread) $sqlwhere .= natural_search(array('t.fk_project_cost_spread'), $ls_project_cost_spread);
+	if($ls_project_cost_share) $sqlwhere .= natural_search(array('t.fk_project_cost_share'), $ls_project_cost_share);
 
     
     //list limit
@@ -302,27 +303,27 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 	if (!empty($ls_product))	$param.='&ls_product='.urlencode($ls_product);
 	if (!empty($ls_supplier_invoice))	$param.='&ls_supplier_invoice='.urlencode($ls_supplier_invoice);
 	if (!empty($ls_c_project_cost_type))	$param.='&ls_c_project_cost_type='.urlencode($ls_c_project_cost_type);
-	if (!empty($ls_project_cost_spread))	$param.='&ls_project_cost_spread='.urlencode($ls_project_cost_spread);
+	if (!empty($ls_project_cost_share))	$param.='&ls_project_cost_share='.urlencode($ls_project_cost_share);
 
         
         if ($filter && $filter != -1) $param.='&filtre='.urlencode($filter);
         
         $num = $db->num_rows($resql);
         //print_barre_liste function defined in /core/lib/function.lib.php, possible to add a picto
-        print_barre_liste($langs->trans("Projectcostline"),$page,$PHP_SELF,$param,$sortfield,$sortorder,'',$num,$nbtotalofrecords);
-        print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_companies', 0, '', '', $limit);
+        //print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_companies', 0, '', '', $limit);
 
         print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-        print '<table class="liste" width="100%">'."\n";
+        print '<div class="div-table-responsive">';
+        print '<table class="liste listwithfilterbefore" width="100%">'."\n";
         //TITLE
         print '<tr class="liste_titre">';
         	print_liste_field_titre($langs->trans('Ref'),$PHP_SELF,'t.ref','',$param,'',$sortfield,$sortorder);
 	print "\n";
 	print_liste_field_titre($langs->trans('Label'),$PHP_SELF,'t.label','',$param,'',$sortfield,$sortorder);
 	print "\n";
-	print_liste_field_titre($langs->trans('Amount'),$PHP_SELF,'t.amount','',$param,'',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('AmountHT'),$PHP_SELF,'t.amount','',$param,'',$sortfield,$sortorder);
 	print "\n";
-	print_liste_field_titre($langs->trans('Vat_mount'),$PHP_SELF,'t.vat_amount','',$param,'',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Amount'),$PHP_SELF,'t.vat_amount','',$param,'',$sortfield,$sortorder);
 	print "\n";
 	print_liste_field_titre($langs->trans('Description'),$PHP_SELF,'t.description','',$param,'',$sortfield,$sortorder);
 	print "\n";
@@ -334,14 +335,14 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 	//print "\n";
 	print_liste_field_titre($langs->trans('Cprojectcosttype'),$PHP_SELF,'t.c_project_cost_type','',$param,'',$sortfield,$sortorder);
 	print "\n";
-	print_liste_field_titre($langs->trans('Projectcostspread'),$PHP_SELF,'t.fk_project_cost_spread','',$param,'',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Projectcostshare'),$PHP_SELF,'t.fk_project_cost_share','',$param,'',$sortfield,$sortorder);
 	print "\n";
 	print_liste_field_titre($langs->trans('Startdate'),$PHP_SELF,'t.date_start','',$param,'',$sortfield,$sortorder);
 	print "\n";
         
         print '</tr>';
         //SEARCH FIELDS
-        print '<tr class="liste_titre">'; 
+        print '<tr class="liste_titre_filter">'; 
         //Search field forref
 	print '<td class="liste_titre" colspan="1" >';
 	print '<input class="flat" size="16" type="text" name="ls_ref" value="'.$ls_ref.'">';
@@ -392,13 +393,13 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         $addChoices_ctype=null;
         print select_sellist($sql_ctype,$html_ctype, $ls_c_project_cost_type,$addChoices_ctype );
         print '</td>';
-//Search field forproject_cost_spread
+//Search field forproject_cost_share
 	print '<td class="liste_titre" colspan="1" >';
-         $sql_spread=array('table'=> 'project_cost_spread','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
-        $html_spread=array('name'=>'ls_project_cost_spread','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
-        $addChoices_spread=null;
-        print select_sellist($sql_spread,$html_spread, $ls_supplier_invoice,$addChoices_spread );
-		//print select_generic('project_cost_spread','rowid','ls_project_cost_spread','rowid','description',$ls_project_cost_spread);
+         $sql_share=array('table'=> 'project_cost_share','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+        $html_share=array('name'=>'ls_project_cost_share','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+        $addChoices_share=null;
+        print select_sellist($sql_share,$html_share, $ls_supplier_invoice,$addChoices_share );
+		//print select_generic('project_cost_share','rowid','ls_project_cost_share','rowid','description',$ls_project_cost_share);
 	print '</td>';
 // no search for the start date
         print '<td></td>';
@@ -420,8 +421,8 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 	print $basedurl.$obj->rowid."'\" >";
 		print "<td>".$object->getNomUrl($obj->ref,'',$obj->ref,0)."</td>";
 		print "<td>".$obj->label."</td>";
-		print "<td>".$obj->amount."</td>";
-		print "<td>".$obj->vat_amount."</td>";
+		print "<td>".price($obj->amount,0,$outputlangs,1,-1,-1,$conf->currency)."</td>";
+		print "<td>".price($obj->amount+$obj->vat_amount,0,$outputlangs,1,-1,-1,$conf->currency)."</td>";
 		print "<td>".$obj->description."</td>";
 
 		print "<td>".$object->LibStatut($obj->status,2)."</td>";
@@ -436,12 +437,12 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
                 print "<td>";
 
                 $sql_type=array('table'=> 'c_project_cost_type','keyfield'=> 'rowid','fields'=>'label', 'join' => '', 'where'=>'','tail'=>'');
-		print_sellist($sql_type,$object->c_project_cost_type,'-');
+		print print_sellist($sql_type,$obj->c_project_cost_type,'-');
                 print "</td>";
                 print "<td>";	
-//$sql_project_cost_spread=array('table'=> 'project_cost_spread','keyfield'=> 'rowid','fields'=>'(CASE isgroup WHEN 1 THEN "'.$langs->trans("Group").'" ELSE "'.$langs->trans("Single").'" END) as group,ref,label', 'join' => '', 'where'=>'','tail'=>'');
-		$sql_project_cost_spread=array('table'=> 'project_cost_spread','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
-		print_sellist($sql_project_cost_spread,$object->project_cost_spread,'-');
+//$sql_project_cost_share=array('table'=> 'project_cost_share','keyfield'=> 'rowid','fields'=>'(CASE isgroup WHEN 1 THEN "'.$langs->trans("Group").'" ELSE "'.$langs->trans("Single").'" END) as group,ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		$sql_project_cost_share=array('table'=> 'project_cost_share','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		print print_sellist($sql_project_cost_share,$obj->fk_project_cost_share,'-');
                  print "</td>";
                  
                  print "<td>".dol_print_date($db->jdate($obj->date_start))."</td>";
@@ -462,6 +463,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     }
 
     print '</table>'."\n";
+    print '</div>';
     print '</form>'."\n";
     // new button
     print '<a href="line_card.php?action=create&Projectid='.$projectid.'" class="butAction" role="button">'.$langs->trans('New');
@@ -473,5 +475,5 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 
 
 // End of page
-if(!$sublist)llxFooter();
-if(!$sublist)$db->close();
+llxFooter();
+$db->close();

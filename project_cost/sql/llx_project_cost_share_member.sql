@@ -14,13 +14,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CREATE TABLE IF NOT EXISTS  llx_c_project_cost_type  (
-   rowid integer NOT NULL  AUTO_INCREMENT PRIMARY KEY,
-   label varchar(200) NOT NULL ,
-   capex_ratio float DEFAULT 1,
-   taxe_benefit_ratio float DEFAULT 1, 
-   ratio_2b_used int NOT NULL DEFAULT 1,
-   accountancy int,
-   active integer NULL
+CREATE TABLE IF NOT EXISTS  llx_project_cost_share_member  (
+    rowid integer NOT NULL  AUTO_INCREMENT PRIMARY KEY,
+    group_id integer not null,
+    member_id integer not null,
+    date_creation datetime NOT NULL, 
+    tms timestamp NOT NULL, 
+    fk_user_creat integer NOT NULL, 
+    fk_user_modif integer
 )ENGINE=InnoDB;
 

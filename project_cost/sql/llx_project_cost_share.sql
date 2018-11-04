@@ -14,28 +14,25 @@
 -- along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-CREATE TABLE llx_project_cost_line(
-	-- BEGIN MODULEBUILDER FIELDS
+CREATE TABLE llx_project_cost_share(
 	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
 	ref varchar(128) NOT NULL, 
 	entity integer DEFAULT 1 NOT NULL, 
-	label varchar(255), 
-	amount double(24,8), 
-        vat_amount double(24,8),
-	description text, 
+	label varchar(255) NOT NULL, 
+	ratio_1 double(24,8) DEFAULT 1,
+	ratio_2 double(24,8) DEFAULT 0, 
+	ratio_3 double(24,8) DEFAULT 0,  
+	ratio_4 double(24,8) DEFAULT 0, 
+	ratio_5 double(24,8) DEFAULT 0, 
+	description varchar(1024), 
 	date_creation datetime NOT NULL, 
-        date_start datetime NOT NULL,
-        date_end datetime DEFAULT NULL,
 	tms timestamp NOT NULL, 
 	fk_user_creat integer NOT NULL, 
 	fk_user_modif integer, 
 	import_key varchar(14), 
-	status integer NOT NULL, 
-	fk_project integer NOT NULL, 
-	fk_product integer DEFAULT NULL, 
-        product_quantity double(24,8) DEFAULT NULL, 
-	fk_supplier_invoice integer DEFAULT NULL,
-	c_project_cost_type integer not null, 
-	fk_project_cost_share integer 
-	-- END MODULEBUILDER FIELDS
+	fk_lot_id integer DEFAULT NULL, 
+	isgroup boolean DEFAULT 0,
+        date_start datetime DEFAULT NULL,
+        date_end datetime DEFAULT NULL,
+        fk_project integer NOT NULL --FIXME.
 ) ENGINE=innodb;

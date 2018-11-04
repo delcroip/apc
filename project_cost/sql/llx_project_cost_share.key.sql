@@ -14,13 +14,5 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CREATE TABLE IF NOT EXISTS  llx_c_project_cost_type  (
-   rowid integer NOT NULL  AUTO_INCREMENT PRIMARY KEY,
-   label varchar(200) NOT NULL ,
-   capex_ratio float DEFAULT 1,
-   taxe_benefit_ratio float DEFAULT 1, 
-   ratio_2b_used int NOT NULL DEFAULT 1,
-   accountancy int,
-   active integer NULL
-)ENGINE=InnoDB;
-
+--FIX me add FK Delecte on cascade
+--ALTER TABLE llx_project_cost_settlement ADD CONSTRAINT llx_project_cost_settlement_fk_project FOREIGN KEY (fk_project) REFERENCES llx_projet(rowid) ON DELETE CASCADE;

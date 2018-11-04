@@ -1,6 +1,6 @@
 <?php
 /* Copyright (C) 2004-2017 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) 2018 SuperAdmin <delcroip@gmail.com>
+ * Copyright (C) 2018 Patrick Delcroix <pmpdelcroix@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ if (! $res) die("Include of main fails");
 // Libraries
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
-require_once '../lib/project_cost.lib.php';
+//require_once '../lib/project_cost.lib.php';
 
 // Translations
 $langs->load("errors");

@@ -16,3 +16,9 @@
 --INSERT INTO llx_project_cost_myobject VALUES (
 --	1, 1, 'mydata'
 --);
+INSERT INTO `llx_c_project_cost_type` (`rowid`, `label`, `capex_ratio`, `taxe_benefit_ratio`, `active`, `ratio_2b_used`) VALUES
+(1, 'Frais de chauffage', 0, 0.25, 1, 1),
+(2, 'Frais de ménage', 0, 0, 1, 1),
+(3, 'Frais de Syndic', 1, 1, 1, 1),
+(4, 'Frais d''ascenseur', 0, 1, 1, 2),
+(5, 'Travaux', 1, 1, 1, 1);

@@ -14,7 +14,10 @@ Main developers: Patrick Delcroix
 # development backlog:
 - (workarround in place, only manual cost is displayed)do some tab for the cost to prevent adding an invoice and some procust / cost and manage the related js/php to fill correctly the db
 - manage properly the status
-- add 3 ratio for the project spread and then the mode will decide wich ration to use
-- manage statement for one sigle stake holder ( leave)ps
+- add dictionnaire value for ratio label (use translation ?)
+- add a lot ext database ( general config)
+- add a lot card link (general config)
 - manage extrafiels in card/list
 - header of list (asc/dec sorting) must take the projectid into account
+- correct the cost type in settlement details
+- extrafiled for settlement

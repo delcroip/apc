@@ -2,7 +2,6 @@
 /* 
  * Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2018	   Patrick DELCROIX     <pmpdelcroix@gmail.com>
- * * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,9 +41,9 @@ include 'core/lib/includeMain.lib.php';
 // Change this following line to use the correct relative path from htdocs
 //include_once(DOL_DOCUMENT_ROOT.'/core/class/formcompany.class.php');
 //require_once 'lib/project_cost.lib.php';
-require_once 'class/projectsettlement.class.php';
+require_once 'class/settlement.class.php';
 require_once 'core/lib/generic.lib.php';
-require_once 'core/lib/projectsettlement.lib.php';
+require_once 'core/lib/settlement.lib.php';
 dol_include_once('/core/lib/functions2.lib.php');
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
@@ -53,9 +52,7 @@ dol_include_once('/core/lib/files.lib.php');
 //dol_include_once('/core/lib/images.lib.php');
 dol_include_once('/core/class/html.formfile.class.php');
 // include conditionnally of the dolibarr version
-//if((version_compare(DOL_VERSION, "3.8", "<"))){
-dol_include_once('/project_cost/lib/project_cost.lib.php');
-//}
+
 dol_include_once('/core/class/html.formother.class.php');
 $PHP_SELF=$_SERVER['PHP_SELF'];
 // Load traductions files requiredby by page
@@ -66,6 +63,7 @@ $langs->load("projectsettlement@project_cost");
 $id			= GETPOST('id','int');
 $ref                    = GETPOST('ref','alpha');
 $action		= GETPOST('action','alpha');
+if(substr_count($action, "sub_"))$action='view';
 $backtopage = GETPOST('backtopage');
 $cancel=GETPOST('cancel');
 $confirm=GETPOST('confirm');
@@ -133,12 +131,13 @@ if($id>0)
 }else if(!empty($ref))
 {
     $object->ref=$ref; 
-    $object->id=$id; 
-    $object->fetch($id);
+    //$object->id=$id; 
+    $object->fetch($id,$ref);
     $ref=dol_sanitizeFileName($object->ref);
         if($projectid<1){
         $projectid=$object->project;
     }
+    $id=$object->id;
 
 }else if (empty($projectid)){
     setEventMessage( $langs->trans('noProjectIdPresent').' id:'.$id,'errors');
@@ -170,7 +169,7 @@ if ($cancel){
 		$object->date_settlement=dol_mktime(0, 0, 0,GETPOST('Datesettlementmonth'),GETPOST('Datesettlementday'),GETPOST('Datesettlementyear'));
 		$object->import_key=GETPOST('Importkey');
 		$object->status=GETPOST('Status');
-
+		$object->intermediate=GETPOST('Intermediate');
     
 
 // test here if the post data is valide
@@ -390,8 +389,18 @@ switch ($action) {
 		print "\n</tr>\n";
 		print "<tr>\n";
 
+// show the field intermediate
 
+		print '<td>'.$langs->trans('Intermediate').' </td><td>';
+		if($edit==1){
+                    print '<input type="checkbox" value="1" name="Intermediate" '.($object->intermediate?'checked':'').'>';
 
+		}else{
+                    print '<input type="checkbox" name="Intermediate" disabled '.($object->intermediate?'checked':'').' >';
+		}
+		print "</td>";
+		print "\n</tr>\n";
+		print "<tr>\n";
 // show the field description
 
 		print '<td>'.$langs->trans('Description').' </td><td>';
@@ -433,7 +442,7 @@ switch ($action) {
 		print "\n</tr>\n";
 		print "<td></td></tr>\n";
 
-        
+     
 
 	print '</table>'."\n";
 	print '<br>';
@@ -495,7 +504,10 @@ switch ($action) {
         }
 }
 dol_fiche_end();
-
+if($object->id ){
+   // include 'sharemember_list.view.tpl.php';
+    include 'settlementdet_list.php';
+}
 // End of page
 llxFooter();
 $db->close();

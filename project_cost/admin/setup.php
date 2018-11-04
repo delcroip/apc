@@ -40,7 +40,7 @@ global $langs, $user;
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
-require_once '../lib/project_cost.lib.php';
+//require_once '../lib/project_cost.lib.php';
 //require_once "../class/myclass.class.php";
 
 // Translations
@@ -76,8 +76,8 @@ $linkback = '<a href="'.($backtopage?$backtopage:DOL_URL_ROOT.'/admin/modules.ph
 print load_fiche_titre($langs->trans($page_name), $linkback, 'object_project_cost@project_cost');
 
 // Configuration header
-$head = project_costAdminPrepareHead();
-dol_fiche_head($head, 'settings', '', -1, "project_cost@project_cost");
+//$head = project_costAdminPrepareHead();
+//dol_fiche_head($head, 'settings', '', -1, "project_cost@project_cost");
 
 // Setup page goes here
 echo $langs->trans("project_costSetupPage");

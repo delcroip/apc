@@ -2,7 +2,6 @@
 /* 
  * Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2018	   Patrick DELCROIX     <pmpdelcroix@gmail.com>
- * * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +43,7 @@ require_once 'core/lib/generic.lib.php';
 require_once 'core/lib/paymentproject.lib.php';
 dol_include_once('/core/lib/functions2.lib.php');
 //dol_include_once('/core/lib/images.lib.php');
-dol_include_once('/project_cost/lib/project_cost.lib.php');
+
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
@@ -447,8 +446,7 @@ switch ($action) {
 // show the field bank
 	if (! empty($conf->banque->enabled))
 	{
-		//print '<td>'.fieldLabel('BankAccount','selectaccountid',1).' </td><td>';
-
+		print '<td>'.fieldLabel('BankAccount','selectaccountid',1).' </td><td>';
 		if($edit==1 && $new=1){
 		print $form->select_comptes($object->bank,"Bank",0,'',1); // not editable 
 		}else{

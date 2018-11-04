@@ -2,7 +2,7 @@
 /* Copyright (C) 2007-2012 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2014	   Juanjo Menent		<jmenent@2byte.es>
  * Copyright (C) 2018	   Patrick DELCROIX     <pmpdelcroix@gmail.com>
- * Copyright (C) ---Put here your own copyright and developer email---
+ * Copyright (C) Patrick Delcroix <pmpdelcroix@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -268,7 +268,7 @@ class Paymentproject extends CommonObject
      *  @param	string	$ref	Ref
      *  @return int          	<0 if KO, >0 if OK
      */
-    function fetch($id,$ref='')
+    function fetch($id,$ref='', $loadparentdata=1)
     {
     	global $langs;
         $sql = "SELECT";
@@ -421,7 +421,7 @@ class Paymentproject extends CommonObject
         {
             if (! empty($conf->global->MAIN_OPTIMIZEFORTEXTBROWSER))
             {
-                $label=$langs->trans("Showspread");
+                $label=$langs->trans("Showshare");
                 $linkclose.=' alt="'.dol_escape_htmltag($label, 1).'"';
             }
             $linkclose.=' title="'.dol_escape_htmltag($label, 1).'"';
@@ -438,7 +438,7 @@ class Paymentproject extends CommonObject
         $lienfin=empty($lien)?'':'</a>';
 
     	$picto='generic';
-        $label = '<u>' . $langs->trans("paymentproject") . '</u>';
+        $label = '<u>' . $langs->trans("Payment") . '</u>';
         $label.= '<br>';
      //   if($ref){
       //      $label.=$langs->trans("Red").': '.$ref;
@@ -555,6 +555,8 @@ class Paymentproject extends CommonObject
         $resql = $this->db->query($sql);
 
         if (! $resql) { $error++; $this->errors[]="Error ".$this->db->lasterror(); }
+        else if ($this->db->affected_rows($resql)==0){$error++;$this->errors[]="Item no found in database"; }
+        
         }
 
 // Commit or rollback

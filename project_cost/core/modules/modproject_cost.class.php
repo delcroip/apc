@@ -1,6 +1,6 @@
 <?php
 /* Copyright (C) 2004-2018 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) 2018 SuperAdmin <delcroip@gmail.com>
+ * Copyright (C) 2018 Patric Delcroix <pmpdelcroix@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ class modproject_cost extends DolibarrModules
 		$this->editor_url = 'https://www.pmpd.eu';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.0';
+		$this->version = '0.1.2';
 		// Key used in llx_const table to save module status enabled/disabled (where PROJECT_COST is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Name of image file used for this module.
@@ -112,7 +112,7 @@ class modproject_cost extends DolibarrModules
 		$this->conflictwith = array();	// List of module class names as string this module is in conflict with
 		$this->langfiles = array("project_cost@project_cost");
 		$this->phpmin = array(5,3);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(7,0);	// Minimum version of Dolibarr required by module
+		$this->need_dolibarr_version = array(6,0);	// Minimum version of Dolibarr required by module
 		$this->warnings_activation = array();                     // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
 		$this->warnings_activation_ext = array();                 // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','ES'='textes'...)
 		//$this->automatic_activation = array('FR'=>'project_costWasAutomaticallyActivatedBecauseOfYourCountryChoice');
@@ -139,11 +139,11 @@ class modproject_cost extends DolibarrModules
         $this->tabs = array();
 		// Example:
 		// $this->tabs[] = array('data'=>'objecttype:+tabname1:Title1:mylangfile@project_cost:$user->rights->project_cost->read:/project_cost/mynewtab1.php?id=__ID__');  					// To add a new tab identified by code tabname1
-       $this->tabs[] = array('data'=>'project:+costs:Costs:cost@project_cost:$user->rights->project_cost->read:/project_cost/line_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
-       $this->tabs[] = array('data'=>'project:+stakeholders:Stakeholders:stakeholders@project_cost:$user->rights->project_cost->read:/project_cost/spread_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
-       // $this->tabs[] = array('data'=>'project:+balance:Balance:balance@project_cost:$user->rights->project_cost->read:/project_cost/balance.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
-       $this->tabs[] = array('data'=>'project:+settlement:Settlement:settlement@project_cost:$user->rights->project_cost->read:/project_cost/settlement_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
-       $this->tabs[] = array('data'=>'project:+payment:Payment:payment@project_cost:$user->rights->project_cost->read:/project_cost/payment_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       $this->tabs[] = array('data'=>'project:+costs:Projectcostline:project_cost@project_cost:$user->rights->project_cost->read:/project_cost/line_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       $this->tabs[] = array('data'=>'project:+lots:Projectcostshare:project_cost@project_cost:$user->rights->project_cost->read:/project_cost/share_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       //$this->tabs[] = array('data'=>'project:+balance:Balance:balance@project_cost:$user->rights->project_cost->read:/project_cost/balance.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       $this->tabs[] = array('data'=>'project:+settlement:Projectsettlement:project_cost@project_cost:$user->rights->project_cost->read:/project_cost/settlement_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
+       $this->tabs[] = array('data'=>'project:+payment:paymentproject:project_cost@project_cost:$user->rights->project_cost->read:/project_cost/payment_list.php?Projectid=__ID__');  					// To add a new tab identified by code tabname1
        
        // $this->tabs[] = array('data'=>'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@project_cost:$user->rights->othermodule->read:/project_cost/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
         // $this->tabs[] = array('data'=>'objecttype:-tabname:NU:conditiontoremove');                                                     										// To remove an existing tab identified by code tabname
@@ -174,39 +174,39 @@ class modproject_cost extends DolibarrModules
 	$this->dictionnaries=array(
 			'langs'=>'project_cost@project_cost',
 			'tabname'=>array(
-				MAIN_DB_PREFIX."c_sellist",
+				/*MAIN_DB_PREFIX."c_sellist",*/
 				MAIN_DB_PREFIX."c_project_cost_type"
 			),
 			'tablib'=>array(
-				"SellistDict",
+				/*"SellistDict",*/
 				"TypeCostDict"
 			),
                
 			'tabsql'=>array(
-				'SELECT rowid, ref, label ,  sql_table ,sql_refid ,sql_fields, sql_join,sql_where, active FROM '.MAIN_DB_PREFIX.'c_sellist',
-				'SELECT f.rowid, f.label,f.capex_ratio,f.taxe_benefit_ratio, f.active FROM '.MAIN_DB_PREFIX.'c_project_cost_type as f'	),
+				/*'SELECT rowid, ref, label ,  sql_table ,sql_refid ,sql_fields, sql_join,sql_where, active FROM '.MAIN_DB_PREFIX.'c_sellist',*/
+				'SELECT f.rowid, f.label,f.capex_ratio,f.taxe_benefit_ratio,f.ratio_2b_used, f.active FROM '.MAIN_DB_PREFIX.'c_project_cost_type as f'	),
 			'tabsqlsort'=>array( 
-				'rowid ASC',
+				/*'rowid ASC',*/
 				'rowid ASC'
 			),
 			'tabfield'=>array(
-				"ref, label , sql_table ,sql_refid ,sql_fields, sql_join,sql_where ",
-				"label,capex_ratio,taxe_benefit_ratio"
+				/*"ref, label , sql_table ,sql_refid ,sql_fields, sql_join,sql_where ",*/
+				"label,capex_ratio,ratio_2b_used,taxe_benefit_ratio"
 			),
 			'tabfieldvalue'=>array(
-				"ref, label , sql_table ,sql_refid ,sql_fields",
-				"label,capex_ratio,taxe_benefit_ratio"
+				/*"ref, label , sql_table ,sql_refid ,sql_fields",*/
+				"label,capex_ratio,ratio_2b_used,taxe_benefit_ratio"
 			),
 			'tabfieldinsert'=>array(
-				"ref, label ,  sql_table ,sql_refid ,sql_fields ",
-				"label,capex_ratio,taxe_benefit_ratio"
+				/*"ref, label ,  sql_table ,sql_refid ,sql_fields ",*/
+				"label,capex_ratio,ratio_2b_used,taxe_benefit_ratio"
 			),
 			'tabrowid'=>array(
-				"rowid",
+				/*"rowid",*/
 				"rowid"
 			),
 			'tabcond'=>array(
-				'$conf->apc->enabled',
+				/*'$conf->apc->enabled',*/
 				'$conf->apc->enabled'
 			)
 		);
@@ -355,10 +355,10 @@ class modproject_cost extends DolibarrModules
 		$this->menu[$r++]=array(
                 				'fk_menu'=>'fk_mainmenu=project_cost',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
-								'titre'=>'List spread',
+								'titre'=>'List share',
 								'mainmenu'=>'project_cost',
-								'leftmenu'=>'project_cost_spread',
-								'url'=>'/project_cost/spread_list.php',
+								'leftmenu'=>'project_cost_share',
+								'url'=>'/project_cost/share_list.php',
 								'langs'=>'project_cost@project_cost',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>1100+$r,
 								'enabled'=>'$conf->project_cost->enabled',  // Define condition to show or hide menu entry. Use '$conf->project_cost->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
@@ -366,12 +366,12 @@ class modproject_cost extends DolibarrModules
 								'target'=>'',
 								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		$this->menu[$r++]=array(
-                				'fk_menu'=>'fk_mainmenu=project_cost,fk_leftmenu=project_cost_spread',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+                				'fk_menu'=>'fk_mainmenu=project_cost,fk_leftmenu=project_cost_share',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
-								'titre'=>'New spread',
+								'titre'=>'New share',
 								'mainmenu'=>'project_cost',
-								'leftmenu'=>'project_cost_spread',
-								'url'=>'/project_cost/spread_card.php?action=create',
+								'leftmenu'=>'project_cost_share',
+								'url'=>'/project_cost/share_card.php?action=create',
 								'langs'=>'project_cost@project_cost',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>1100+$r,
 								'enabled'=>'$conf->project_cost->enabled',  // Define condition to show or hide menu entry. Use '$conf->project_cost->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.

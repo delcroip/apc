@@ -1,0 +1,32 @@
+# Dolibarr language file - French - timesheet
+#module
+noProjectIdPresent = ID de projet manquant
+noIdPresent = ID manquant
+Showshare = Showshare
+#dictionnaire
+Cprojectcosttype = Type de coût
+Ratio_1 = m²
+Ratio_2 = étage
+Ratio_3 = N/A
+Ratio_4 = N/A
+Ratio_5 = N/A
+#Settlement
+GenerateDet = Générer les details du décompte
+ProjectsettlementBalance = Décomptes par propriétaire
+Intermediate = Décompte intermédiaire
+DeleteProjectsettlement = Supperssion du décompte
+DeleteProjectsettlementdet = Supperssion d'une ligne du décompte
+Projectsettlement = Décomptes
+Datesettlement = Date du décompte
+#Lots
+Projectcostshare = Lots
+DeleteProjectcostshare = Suppression du Lot
+DeleteProjectcostsharemember = Suppression du membre du Lot
+DeleteProjectcostshareholder = Suppression du propriétaire du Lot
+Isgroup = Est un groupe
+#Cost
+DeleteProjectcostline = Suppression du coût projet
+Projectcostline = Coût projet
+#payment
+Deletepaymentproject = Suppression du paiement projet
+paymentproject = Paiement projet

@@ -192,7 +192,7 @@ function select_generic($table, $fieldValue,$htmlName,$fieldToShow1,$fieldToShow
  
  
  function print_sellist($sqlarray=array('table'=> 'user','keyfield'=> 'rowid','fields'=>'firstname,lastname', 'join' => '', 'where'=>'','tail'=>''),
-                        $selected,$separator=' '){
+                        $selected,$separator=' ',$url=''){
     global $conf,$langs,$db;
     if( !isset($sqlarray['table'])|| !isset($sqlarray['keyfield'])||!isset($sqlarray['fields']) )
     {
@@ -234,7 +234,8 @@ function select_generic($table, $fieldValue,$htmlName,$fieldToShow1,$fieldToShow
                 foreach($fields as $item){
                     if(!empty($select))$select.=$separator;
                     $select.=$obj->{$item['label']};
-                }     
+                }
+                     if(!empty($url))$select='<a href="'.$url.$obj->{$sqlarray['keyfield']}.'">'.$select.'</a>';
             }else{
                 $select= "NULL";
             }

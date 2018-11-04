@@ -1,7 +1,8 @@
 <?php
 /* Copyright (C) 2007-2012 Laurent Destailleur  <eldy@users.sourceforge.net>
  * Copyright (C) 2014	   Juanjo Menent		<jmenent@2byte.es>
- * Copyright (C) Patrick Delcroix <pmpdelcroix@gmail.com>
+ * Copyright (C) 2018	   Patrick DELCROIX     <pmpdelcroix@gmail.com>
+ * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +19,10 @@
  */
 
 /**
- *  \file       dev/projectcostlines/projectcostline.class.php
+ *  \file       dev/projectcostshareholders/shareholder.class.php
  *  \ingroup    project_cost othermodule1 othermodule2
  *  \brief      This file is an example for a CRUD class file (Create/Read/Update/Delete)
- *				Initialy built by build_class_from_table on 2018-06-11 21:10
+ *				Initialy built by build_class_from_table on 2018-09-30 16:06
  */
 
 // Put here all includes required by your class file
@@ -29,46 +30,34 @@ require_once(DOL_DOCUMENT_ROOT."/core/class/commonobject.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/societe/class/societe.class.php");
 //require_once(DOL_DOCUMENT_ROOT."/product/class/product.class.php");
 
-$costlineStatusPictoArray=array(0=> 'statut7',1=>'statut3',2=>'statut8',3=>'statut4');
-$costlineStatusArray=array(0=> 'Draft',1=>'Validated',2=>'Cancelled',3 =>'Payed');
+$projectcostshareholderStatusPictoArray=array(0=> 'statut7',1=>'statut3',2=>'statut8',3=>'statut4');
+$projectcostshareholderStatusArray=array(0=> 'Draft',1=>'Validated',2=>'Cancelled',3 =>'Payed');
 /**
  *	Put here description of your class
  */
-class Projectcostline extends CommonObject
+class Projectcostshareholder extends CommonObject
 {
     /**
      * @var string ID to identify managed object
      */				//!< To return several error codes (or messages)
-    public $element='projectcostline';			//!< Id that identify managed objects
+    public $element='projectcostshareholder';			//!< Id that identify managed objects
     /**
      * @var string Name of table without prefix where object is stored
      */    
-    public $table_element='project_cost_line';		//!< Name of table without prefix where object is stored
+    public $table_element='project_cost_share_holder';		//!< Name of table without prefix where object is stored
 
     public $id;
     // BEGIN OF automatic var creation
     
-	public $ref;
 	public $entity;
-	public $label;
-	public $amount;
-	public $vat_amount;
-	public $description;
+	public $soc;
 	public $date_creation='';
 	public $tms='';
 	public $user_creat;
 	public $user_modif;
-	public $import_key;
-	public $status;
-	public $project;
-	public $product;
-	public $supplier_invoice;
-	public $c_project_cost_type;
+	public $date_start='';
 	public $project_cost_share;
-        public $product_quantity;
-        public $date_start;//FIXME
-        public $date_end; //FIXME
-        
+
     
     // END OF automatic var creation
 
@@ -106,43 +95,19 @@ class Projectcostline extends CommonObject
         // Insert request
         $sql = "INSERT INTO ".MAIN_DB_PREFIX.$this->table_element."(";
         
-		$sql.= 'ref,';
-		$sql.= 'label,';
-		$sql.= 'amount,';
-		$sql.= 'vat_amount,';
-		$sql.= 'description,';
+		$sql.= 'fk_soc,';
 		$sql.= 'date_creation,';
-		$sql.= 'date_start,';
-		$sql.= 'date_end,';
 		$sql.= 'fk_user_creat,';
-		$sql.= 'import_key,';
-		$sql.= 'status,';
-		$sql.= 'fk_project,';
-		$sql.= 'fk_product,';
-		$sql.= 'fk_supplier_invoice,';
-		$sql.= 'c_project_cost_type,';
-                $sql.= ' product_quantity,';
+		$sql.= 'date_start,';
 		$sql.= 'fk_project_cost_share';
 
         
         $sql.= ") VALUES (";
         
-		$sql.=' '.(empty($this->ref)?'NULL':"'".$this->db->escape($this->ref)."'").',';
-		$sql.=' '.(empty($this->label)?'NULL':"'".$this->db->escape($this->label)."'").',';
-		$sql.=' '.(empty($this->amount)?'NULL':"'".$this->amount."'").',';
-		$sql.=' '.(empty($this->vat_amount)?'NULL':"'".$this->vat_amount."'").',';
-		$sql.=' '.(empty($this->description)?'NULL':"'".$this->db->escape($this->description)."'").',';
+		$sql.=' '.(empty($this->soc)?'NULL':"'".$this->soc."'").',';
 		$sql.=' NOW() ,';
-                $sql.=' '.(empty($this->date_start) || dol_strlen($this->date_start)==0?'NULL':"'".$this->db->idate($this->date_start)."'").',';
-		$sql.=' '.(empty($this->date_end) || dol_strlen($this->date_end)==0?'NULL':"'".$this->db->idate($this->date_end)."'").',';
-		$sql.='\''.$user->id.'\',';
-		$sql.=' '.(empty($this->import_key)?'NULL':"'".$this->db->escape($this->import_key)."'").',';
-		$sql.=' '.(empty($this->status)?'0':"'".$this->status."'").',';
-		$sql.=' '.(empty($this->project)?'NULL':"'".$this->project."'").',';
-		$sql.=' '.(empty($this->product)?'NULL':"'".$this->product."'").',';
-		$sql.=' '.(empty($this->supplier_invoice)?'NULL':"'".$this->supplier_invoice."'").',';
-		$sql.=' '.(empty($this->c_project_cost_type)?'NULL':"'".$this->c_project_cost_type."'").',';
-                $sql.=' '.(empty($this->product_quantity)?'NULL':"'".$this->product_quantity."'").',';
+		$sql.=' \''.$user->id.'\',';
+		$sql.=' '.(empty($this->date_start) || dol_strlen($this->date_start)==0?'NULL':"'".$this->db->idate($this->date_start)."'").',';
 		$sql.=' '.(empty($this->project_cost_share)?'NULL':"'".$this->project_cost_share."'").'';
 
         
@@ -196,32 +161,20 @@ class Projectcostline extends CommonObject
      *  @param	string	$ref	Ref
      *  @return int          	<0 if KO, >0 if OK
      */
-    function fetch($id,$ref='', $loadparentdata=1)
+    function fetch($id,$ref='')
     {
     	global $langs;
         $sql = "SELECT";
         $sql.= " t.rowid,";
         
-        $sql.=' t.ref,';
-        $sql.=' t.entity,';
-        $sql.=' t.label,';
-        $sql.=' t.amount,';
-        $sql.=' t.vat_amount,';
-        $sql.=' t.description,';
-        $sql.=' t.date_creation,';
-        $sql.=' t.date_start,';
-        $sql.=' t.date_end,';
-        $sql.=' t.tms,';
-        $sql.=' t.fk_user_creat,';
-        $sql.=' t.fk_user_modif,';
-        $sql.=' t.import_key,';
-        $sql.=' t.status,';
-        $sql.=' t.fk_project,';
-        $sql.=' t.fk_product,';
-        $sql.=' t.fk_supplier_invoice,';
-        $sql.=' t.c_project_cost_type,';
-        $sql.= ' product_quantity,';
-        $sql.=' t.fk_project_cost_share';
+		$sql.=' t.entity,';
+		$sql.=' t.fk_soc,';
+		$sql.=' t.date_creation,';
+		$sql.=' t.tms,';
+		$sql.=' t.fk_user_creat,';
+		$sql.=' t.fk_user_modif,';
+		$sql.=' t.date_start,';
+		$sql.=' t.fk_project_cost_share';
 
         
         $sql.= " FROM ".MAIN_DB_PREFIX.$this->table_element." as t";
@@ -236,26 +189,14 @@ class Projectcostline extends CommonObject
                 $obj = $this->db->fetch_object($resql);
                 $this->id    = $obj->rowid;
                 
-                $this->ref = $obj->ref;
-                $this->entity = $obj->entity;
-                $this->label = $obj->label;
-                $this->amount = $obj->amount;
-                $this->vat_amount = $obj->vat_amount;
-                $this->description = $obj->description;
-                $this->date_creation = $this->db->jdate($obj->date_creation);
-                $this->date_start = $this->db->jdate($obj->date_start);
-                $this->date_end = $this->db->jdate($obj->date_end);
-                $this->tms = $this->db->jdate($obj->tms);
-                $this->user_creat = $obj->fk_user_creat;
-                $this->user_modif = $obj->fk_user_modif;
-                $this->import_key = $obj->import_key;
-                $this->status = $obj->status;
-                $this->project = $obj->fk_project;
-                $this->product = $obj->fk_product;
-                $this->supplier_invoice = $obj->fk_supplier_invoice;
-                $this->c_project_cost_type = $obj->c_project_cost_type;
-                $this->product_quantity = $obj->product_quantity;
-                $this->project_cost_share = $obj->fk_project_cost_share;
+				$this->entity = $obj->entity;
+				$this->soc = $obj->fk_soc;
+				$this->date_creation = $this->db->jdate($obj->date_creation);
+				$this->tms = $this->db->jdate($obj->tms);
+				$this->user_creat = $obj->fk_user_creat;
+				$this->user_modif = $obj->fk_user_modif;
+				$this->date_start = $this->db->jdate($obj->date_start);
+				$this->project_cost_share = $obj->fk_project_cost_share;
 
                 
             }
@@ -356,7 +297,7 @@ class Projectcostline extends CommonObject
         {
             if (! empty($conf->global->MAIN_OPTIMIZEFORTEXTBROWSER))
             {
-                $label=$langs->trans("ShowLot");
+                $label=$langs->trans("Showshare");
                 $linkclose.=' alt="'.dol_escape_htmltag($label, 1).'"';
             }
             $linkclose.=' title="'.dol_escape_htmltag($label, 1).'"';
@@ -364,16 +305,16 @@ class Projectcostline extends CommonObject
         }else $linkclose = ($morecss?' class="'.$morecss.'"':'');
         
         if($id){
-            $lien = '<a href="'.dol_buildpath('/project_cost/line_card.php',1).'id='.$id.'&Projectid='.$this->project.'&action=view"'.$linkclose.'>';
+            $lien = '<a href="'.dol_buildpath('/project_cost/Projectcostshareholder_card.php',1).'id='.$id.'&action=view"'.$linkclose.'>';
         }else if (!empty($ref)){
-            $lien = '<a href="'.dol_buildpath('/project_cost/line_card.php',1).'?ref='.$ref.'&Projectid='.$this->project.'&action=view"'.$linkclose.'>';
+            $lien = '<a href="'.dol_buildpath('/project_cost/Projectcostshareholder_card.php',1).'?ref='.$ref.'&action=view"'.$linkclose.'>';
         }else{
             $lien =  "";
         }
         $lienfin=empty($lien)?'':'</a>';
 
     	$picto='generic';
-        $label = '<u>' . $langs->trans("Cost") . '</u>';
+        $label = '<u>' . $langs->trans("ShareHolder") . '</u>';
         $label.= '<br>';
         if($ref){
             $label.=$langs->trans("Red").': '.$ref;
@@ -392,7 +333,7 @@ class Projectcostline extends CommonObject
         }
     	return $result;
     }  
-           /**
+     /**
 	 *  Retourne select libelle du status (actif, inactif)
 	 *
 	 *  @param	object 		$form          form object that should be created	
@@ -400,11 +341,11 @@ class Projectcostline extends CommonObject
 	 */
 	function selectLibStatut($form,$htmlname='Status')
 	{
-            global $costlineStatusArray;
-            return $form->selectarray($htmlname,$costlineStatusArray,$this->status);
-	}     
+            global $projectcostshareholderStatusPictoArray,$projectcostshareholderStatusArray;
+            return $form->selectarray($htmlname,$projectcostshareholderStatusArray,$this->status);
+	}   
     /**
-	 *  Retourne le libelle du status d'un user (actif, inactif)
+	 *  Retourne le libelle du status (actif, inactif)
 	 *
 	 *  @param	int		$mode          0=libelle long, 1=libelle court, 2=Picto + Libelle court, 3=Picto, 4=Picto + Libelle long, 5=Libelle court + Picto
 	 *  @return	string 			       Label of status
@@ -413,7 +354,6 @@ class Projectcostline extends CommonObject
 	{
 		return $this->LibStatut($this->status,$mode);
 	}
-
 	/**
 	 *  Return the status
 	 *
@@ -423,38 +363,35 @@ class Projectcostline extends CommonObject
 	 */
 	static function LibStatut($status,$mode=0)
 	{
-		global $langs, $costlineStatusArray,$costlineStatusPictoArray;
-
-                if($status=="")$status=0;
+		global $langs,$projectcostshareholderStatusPictoArray,$projectcostshareholderStatusArray;
 		if ($mode == 0)
 		{
 			$prefix='';
-			return $langs->trans($costlineStatusArray[$status]);
+			return $langs->trans($projectcostshareholderStatusArray[$status]);
 		}
 		if ($mode == 1)
 		{
-			return $langs->trans($costlineStatusArray[$status]);
+			return $langs->trans($projectcostshareholderStatusArray[$status]);
 		}
 		if ($mode == 2)
 		{
-
-			 return img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]).' '.$langs->trans($costlineStatusArray[$status]);
+			 return img_picto($projectcostshareholderStatusArray[$status],$projectcostshareholderStatusPictoArray[$status]).' '.$langs->trans($projectcostshareholderStatusArray[$status]);
 		}
 		if ($mode == 3)
 		{
-			 return img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]);
+			 return img_picto($projectcostshareholderStatusArray[$status],$projectcostshareholderStatusPictoArray[$status]);
 		}
 		if ($mode == 4)
 		{
-			 return img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]).' '.$langs->trans($costlineStatusArray[$status]);
+			 return img_picto($projectcostshareholderStatusArray[$status],$projectcostshareholderStatusPictoArray[$status]).' '.$langs->trans($projectcostshareholderStatusArray[$status]);
 		}
 		if ($mode == 5)
 		{
-			 return $langs->trans($costlineStatusArray[$status]).' '.img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]);
+			 return $langs->trans($projectcostshareholderStatusArray[$status]).' '.img_picto($projectcostshareholderStatusArray[$status],$projectcostshareholderStatusPictoArray[$status]);
 		}
 		if ($mode == 6)
 		{
-			 return $langs->trans($costlineStatusArray[$status]).' '.img_picto($costlineStatusArray[$status],$costlineStatusPictoArray[$status]);
+			 return $langs->trans($projectcostshareholderStatusArray[$status]).' '.img_picto($projectcostshareholderStatusArray[$status],$projectcostshareholderStatusPictoArray[$status]);
 		}
 	}
 
@@ -524,7 +461,7 @@ class Projectcostline extends CommonObject
     {
         global $user,$langs;
         $error=0;
-        $object=new Projectcostline($this->db);
+        $object=new Projectcostshareholder($this->db);
         $this->db->begin();
         // Load source object
         $object->fetch($fromid);
@@ -567,26 +504,15 @@ class Projectcostline extends CommonObject
     {
         $this->id=0;
         
-        $this->ref='';
-        $this->entity='';
-        $this->label='';
-        $this->amount='';
-        $this->vat_amount='';
-        $this->description='';
-        $this->date_creation='';
-        $this->tms='';
-        $this->user_creat='';
-        $this->user_modif='';
-        $this->import_key='';
-        $this->status='';
-        $this->project='';
-        $this->product='';
-        $this->supplier_invoice='';
-        $this->c_project_cost_type='';
-        $this->product_quantity='';
-        $this->project_cost_share='';
-        $this->date_start='';
-        $this->date_end='';
+		$this->entity='';
+		$this->soc='';
+		$this->date_creation='';
+		$this->tms='';
+		$this->user_creat='';
+		$this->user_modif='';
+		$this->date_start='';
+		$this->project_cost_share='';
+
         
     }
     /**
@@ -597,24 +523,12 @@ class Projectcostline extends CommonObject
      */       
     function cleanParam(){
         
-        if (!empty($this->ref)) $this->ref=trim($this->ref);
-        if (!empty($this->label)) $this->label=trim($this->label);
-        if (!empty($this->amount)) $this->amount=trim($this->amount);
-        if (!empty($this->vat_amount)) $this->vat_amount=trim($this->vat_amount);
-        if (!empty($this->description)) $this->description=trim($this->description);
-        if (!empty($this->date_creation)) $this->date_creation=trim($this->date_creation);
-        if (!empty($this->user_creat)) $this->user_creat=trim($this->user_creat);
-        if (!empty($this->user_modif)) $this->user_modif=trim($this->user_modif);
-        if (!empty($this->import_key)) $this->import_key=trim($this->import_key);
-        if (!empty($this->status)) $this->status=trim($this->status);
-        if (!empty($this->project)) $this->project=trim($this->project);
-        if (!empty($this->product)) $this->product=trim($this->product);
-        if (!empty($this->supplier_invoice)) $this->supplier_invoice=trim($this->supplier_invoice);
-        if (!empty($this->c_project_cost_type)) $this->c_project_cost_type=trim($this->c_project_cost_type);
-        if (!empty($this->product_quantity)) $this->product_quantity=trim($this->product_quantity);
-        if (!empty($this->project_cost_share)) $this->project_cost_share=trim($this->project_cost_share);
-        if (!empty($this->date_start)) $this->date_start=trim($this->date_start);
-        if (!empty($this->date_end)) $this->date_end=trim($this->date_end);
+		if (!empty($this->soc)) $this->soc=trim($this->soc);
+		if (!empty($this->date_creation)) $this->date_creation=trim($this->date_creation);
+		if (!empty($this->user_creat)) $this->user_creat=trim($this->user_creat);
+		if (!empty($this->user_modif)) $this->user_modif=trim($this->user_modif);
+		if (!empty($this->date_start)) $this->date_start=trim($this->date_start);
+		if (!empty($this->project_cost_share)) $this->project_cost_share=trim($this->project_cost_share);
 
         
     }
@@ -627,22 +541,10 @@ class Projectcostline extends CommonObject
     function setSQLfields($user){
         $sql='';
         
-        $sql.=' ref='.(empty($this->ref)!=0 ? 'null':"'".$this->db->escape($this->ref)."'").',';
-        $sql.=' label='.(empty($this->label)!=0 ? 'null':"'".$this->db->escape($this->label)."'").',';
-        $sql.=' amount='.(empty($this->amount)!=0 ? 'null':"'".$this->amount."'").',';
-        $sql.=' vat_amount='.(empty($this->vat_amount)!=0 ? 'null':"'".$this->vat_amount."'").',';
-        $sql.=' description='.(empty($this->description)!=0 ? 'null':"'".$this->db->escape($this->description)."'").',';
-        $sql.=' fk_user_modif="'.$user->id.'",';
-        $sql.=' import_key='.(empty($this->import_key)!=0 ? 'null':"'".$this->db->escape($this->import_key)."'").',';
-        $sql.=' status='.(empty($this->status)!=0 ? '0':"'".$this->status."'").',';
-        $sql.=' fk_project='.(empty($this->project)!=0 ? 'null':"'".$this->project."'").',';
-        $sql.=' fk_product='.(empty($this->product)!=0 ? 'null':"'".$this->product."'").',';
-        $sql.=' fk_supplier_invoice='.(empty($this->supplier_invoice)!=0 ? 'null':"'".$this->supplier_invoice."'").',';
-        $sql.=' c_project_cost_type='.(empty($this->c_project_cost_type)!=0 ? 'null':"'".$this->c_project_cost_type."'").',';
-        $sql.=' product_quantity='.(empty($this->product_quantity)!=0 ? 'null':"'".$this->product_quantity."'").',';
-        $sql.=' fk_project_cost_share='.(empty($this->project_cost_share)!=0 ? 'null':"'".$this->project_cost_share."'").',';
-        $sql.=' date_start='.(dol_strlen($this->date_start)!=0 ? "'".$this->db->idate($this->date_start)."'":'null').',';
-        $sql.=' date_end='.(dol_strlen($this->date_end)!=0 ? "'".$this->db->idate($this->date_end)."'":'null').'';
+		$sql.=' fk_soc='.(empty($this->soc)!=0 ? 'null':"'".$this->soc."'").',';
+		$sql.=' fk_user_modif="'.$user->id.'",';
+		$sql.=' date_start='.(dol_strlen($this->date_start)!=0 ? "'".$this->db->idate($this->date_start)."'":'null').',';
+		$sql.=' fk_project_cost_share='.(empty($this->project_cost_share)!=0 ? 'null':"'".$this->project_cost_share."'").'';
 
         
         return $sql;

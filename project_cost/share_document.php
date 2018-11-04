@@ -1,6 +1,6 @@
 <?php
 /* Copyright (C) 2007-2017 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) Patrick Delcroix <pmpdelcroix@gmail.com>
+ * Copyright (C) 2018     Patrick DELCROIX     <pmpdelcroix@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,23 @@
  */
 
 /**
- *  \file       htdocs/modulebuilder/template/Projectcostline_document.php
+ *  \file       htdocs/modulebuilder/template/Projectcostshare_document.php
  *  \ingroup    project_cost
- *  \brief      Tab for documents linked to Projectcostline
+ *  \brief      Tab for documents linked to Projectcostshare
  */
 
-include 'core/lib/includeMain.lib.php';
+if($_SERVER['SCRIPT_FILENAME'])include 'core/lib/includeMain.lib.php';
 
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/images.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+require_once 'class/share.class.php';
+require_once 'core/lib/share.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
-require_once './core/lib/line.lib.php';
-require_once './class/line.class.php';
 // Load traductions files requiredby by page
-$langs->loadLangs(array("Projectcostline@project_cost","companies","other"));
+$langs->loadLangs(array("share@project_cost","companies","other"));
 
 
 $action=GETPOST('action','aZ09');
@@ -54,33 +54,21 @@ $pageprev = $page - 1;
 $pagenext = $page + 1;
 
 // Initialize technical objects
-
+$object=new Projectcostshare($db);
 $extrafields = new ExtraFields($db);
 $diroutputmassaction=$conf->project_cost->dir_output . '/temp/massgeneration/'.$user->id;
-$hookmanager->initHooks(array('Projectcostlinedocument'));     // Note that conf->hooks_modules contains array
+$hookmanager->initHooks(array('Projectcostsharedocument'));     // Note that conf->hooks_modules contains array
 // Fetch optionals attributes and labels
-$extralabels = $extrafields->fetch_name_optionals_label('Projectcostline');
-$object=new Projectcostline($db);
-if($id>0)
-{
-    $object->id=$id; 
-    $object->fetch($id);
-    $ref=dol_sanitizeFileName($object->ref);
-    if($projectid<1){
-        $projectid=$object->project;
-    }}
-if(!empty($ref))
-{
-    $object->ref=$ref; 
-    $object->id=$id; 
-    $object->fetch($id);
-    $ref=dol_sanitizeFileName($object->ref);
-    $upload_dir = $conf->project_cost->dir_output.'/'.get_exdir($object->id,2,0,0,$object,'Projectcostline').$ref;
-    
-}
+$extralabels = $extrafields->fetch_name_optionals_label('Projectcostshare');
+
 // Load object
 include DOL_DOCUMENT_ROOT.'/core/actions_fetchobject.inc.php';  // Must be include, not include_once  // Must be include, not include_once. Include fetch and fetch_thirdparty but not fetch_optionals
 
+if($id<1)ProjectcostshareReloadPage ($backtopage, $projectid, $id, $ref);
+else if($projectid<1){
+    $object->fetch($id);
+    $projectid=$object->project;
+}
 //if ($id > 0 || ! empty($ref)) $upload_dir = $conf->sellyoursaas->multidir_output[$object->entity] . "/packages/" . dol_sanitizeFileName($object->id);
 if ($id > 0 || ! empty($ref)) $upload_dir = $conf->sellyoursaas->multidir_output[$object->entity] . "/packages/" . dol_sanitizeFileName($object->ref);
 
@@ -99,14 +87,14 @@ include_once DOL_DOCUMENT_ROOT . '/core/actions_linkedfiles.inc.php';
 
 $form = new Form($db);
 
-$title=$langs->trans("Projectcostline").' - '.$langs->trans("Files");
+$title=$langs->trans("Projectcostshare").' - '.$langs->trans("Files");
 $help_url='';
 //$help_url='EN:Module_Third_Parties|FR:Module_Tiers|ES:Empresas';
 llxHeader('', $title, $help_url);
-        $project= new Project($db);
-        $project->fetch($projectid);
-        $headProject=project_prepare_head($project);
-         dol_fiche_head($headProject, 'cost', $langs->trans("Project"), 0, 'project');
+    $project= new Project($db);
+    $project->fetch($projectid);
+    $headProject=project_prepare_head($project);
+    dol_fiche_head($headProject, 'lots', $langs->trans("Project"), 0, 'project');
 
 if ($object->id)
 {
@@ -114,9 +102,9 @@ if ($object->id)
 	 * Show tabs
 	 */
 	if (! empty($conf->notification->enabled)) $langs->load("mails");
-	$head = ProjectcostlinePrepareHead($object);
+	$head = ProjectcostsharePrepareHead($object);
 
-	dol_fiche_head($head, 'document', $langs->trans("Projectcostline"), -1, 'Projectcostline@project_cost');
+	dol_fiche_head($head, 'document', $langs->trans("Projectcostshare"), -1, 'share@project_cost');
 
 
 	// Construit liste des fichiers
@@ -129,7 +117,7 @@ if ($object->id)
 
 	// Object card
 	// ------------------------------------------------------------
-	$linkback = '<a href="' .dol_buildpath('/project_cost/line_list.php',1) . '?restore_lastsearch_values=1' . (! empty($socid) ? '&socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
+	$linkback = '<a href="' .dol_buildpath('/project_cost/share_list.php',1) . '?restore_lastsearch_values=1' . (! empty($socid) ? '&socid=' . $socid : '') . '">' . $langs->trans("BackToList") . '</a>';
 
 	dol_banner_tab($object, 'ref', $linkback, 1, 'ref', 'ref', $morehtmlref);
 
@@ -157,8 +145,8 @@ if ($object->id)
 	$permtoedit = 1;
 	$param = '&id=' . $object->id;
 
-	//$relativepathwithnofile='Projectcostline/' . dol_sanitizeFileName($object->id).'/';
-	$relativepathwithnofile='Projectcostline/' . dol_sanitizeFileName($object->ref).'/';
+	//$relativepathwithnofile='Projectcostshare/' . dol_sanitizeFileName($object->id).'/';
+	$relativepathwithnofile='Projectcostshare/' . dol_sanitizeFileName($object->ref).'/';
 
 	include_once DOL_DOCUMENT_ROOT . '/core/tpl/document_actions_post_headers.tpl.php';
 }

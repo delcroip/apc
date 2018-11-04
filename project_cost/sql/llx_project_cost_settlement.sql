@@ -1,4 +1,3 @@
--- Advanced Project Cost
 -- Copyright (C) 2018     Patrick DELCROIX     <pmpdelcroix@gmail.com>
 --
 -- This program is free software: you can redistribute it and/or modify
@@ -12,15 +11,23 @@
 -- GNU General Public License for more details.
 --
 -- You should have received a copy of the GNU General Public License
--- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- along with this program.  If not, see http://www.gnu.org/licenses/.
 
-CREATE TABLE IF NOT EXISTS  llx_c_project_cost_type  (
-   rowid integer NOT NULL  AUTO_INCREMENT PRIMARY KEY,
-   label varchar(200) NOT NULL ,
-   capex_ratio float DEFAULT 1,
-   taxe_benefit_ratio float DEFAULT 1, 
-   ratio_2b_used int NOT NULL DEFAULT 1,
-   accountancy int,
-   active integer NULL
-)ENGINE=InnoDB;
 
+CREATE TABLE llx_project_cost_settlement(
+	-- BEGIN MODULEBUILDER FIELDS
+	rowid integer AUTO_INCREMENT PRIMARY KEY NOT NULL, 
+        ref varchar(50) NOT NULL,
+	entity integer DEFAULT 1 NOT NULL, 
+	label varchar(255), 
+        fk_project integer NOT NULL,
+	description text, 
+        date_settlement datetime NOT NULL, 
+	date_creation datetime NOT NULL, 
+	date_modification timestamp NOT NULL, 
+	fk_user_creat integer NOT NULL, 
+	fk_user_modif integer, 
+        intermediate integer default 0,
+	import_key varchar(14), 
+	status integer NOT NULL
+) ENGINE=innodb;

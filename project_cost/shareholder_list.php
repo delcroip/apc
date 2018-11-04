@@ -1,7 +1,7 @@
 <?php
 /* 
  * Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) Patrick Delcroix <pmpdelcroix@gmail.com>
+ * Copyright (C) ---Put here your own copyright and developer email---
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
  */
 
 /**
- *   	\file       dev/projectsettlements/projectsettlement_page.php
+ *   	\file       dev/projectcostshareholders/projectcostshareholder_page.php
  *		\ingroup    project_cost othermodule1 othermodule2
  *		\brief      This file is an example of a php page
- *					Initialy built by build_class_from_table on 2018-07-21 21:29
+ *					Initialy built by build_class_from_table on 2018-09-30 16:06
  */
 
 //if (! defined('NOREQUIREUSER'))  define('NOREQUIREUSER','1');
@@ -34,39 +34,35 @@
 //if (! defined('NOREQUIREMENU'))  define('NOREQUIREMENU','1');			// If there is no need to load and show top and left menu
 //if (! defined('NOREQUIREHTML'))  define('NOREQUIREHTML','1');			// If we don't need to load the html.form.class.php
 //if (! defined('NOREQUIREAJAX'))  define('NOREQUIREAJAX','1');
-//if (! defined("NOLOGIN"))        define("NOLOGIN",'1');				// If this page is public (can be called outside logged session)
 
-// Change this following line to use the correct relative path (../, ../../, etc)
-include 'core/lib/includeMain.lib.php';
 // Change this following line to use the correct relative path from htdocs
 //include_once(DOL_DOCUMENT_ROOT.'/core/class/formcompany.class.php');
 //require_once 'lib/project_cost.lib.php';
-require_once 'class/settlement.class.php';
+require_once 'class/shareholder.class.php';
 require_once 'core/lib/generic.lib.php';
-require_once 'core/lib/settlement.lib.php';
+//require_once 'core/lib/shareholder.lib.php';
 dol_include_once('/core/lib/functions2.lib.php');
 //document handling
 dol_include_once('/core/lib/files.lib.php');
+
+dol_include_once('/societe/class/societe.class.php');
 //dol_include_once('/core/lib/images.lib.php');
 dol_include_once('/core/class/html.formfile.class.php');
-// include conditionnally of the dolibarr version
 dol_include_once('/core/class/html.formother.class.php');
-require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/lib/project.lib.php';
 $PHP_SELF=$_SERVER['PHP_SELF'];
 // Load traductions files requiredby by page
 //$langs->load("companies");
-$langs->load("settlement@project_cost");
+$langs->load("projectcostshareholder@project_cost");
 
 // Get parameter
-$id			= GETPOST('id','int');
-$ref                    = GETPOST('ref','alpha');
+$parent			= GETPOST('id','int');
+$parentRef			= GETPOST('ref','int');
+$sub_id			= GETPOST('sub_id','int');
 $action		= GETPOST('action','alpha');
 $backtopage = GETPOST('backtopage');
 $cancel=GETPOST('cancel');
 $confirm=GETPOST('confirm');
 $tms= GETPOST('tms','alpha');
-$projectid=GETPOST('Projectid','int');
 //// Get parameters
 $sortfield = GETPOST('sortfield','alpha'); 
 $sortorder = GETPOST('sortorder','alpha')?GETPOST('sortorder','alpha'):'ASC';
@@ -74,14 +70,10 @@ $removefilter=isset($_POST["removefilter_x"]) || isset($_POST["removefilter"]);
 //$applyfilter=isset($_POST["search_x"]) ;//|| isset($_POST["search"]);
 if (!$removefilter )		// Both test must be present to be compatible with all browsers
 {
-    	$ls_ref= GETPOST('ls_ref','alpha');
-	$ls_label= GETPOST('ls_label','alpha');
-	$ls_project= GETPOST('ls_project','int');
-	$ls_description= GETPOST('ls_description','alpha');
-	$ls_date_settlement_month= GETPOST('ls_date_settlement_month','int');
-	$ls_date_settlement_year= GETPOST('ls_date_settlement_year','int');
-	$ls_import_key= GETPOST('ls_import_key','alpha');
-	$ls_status= GETPOST('ls_status','int');
+    	$ls_soc= GETPOST('ls_soc','int');
+	$ls_date_start_month= GETPOST('ls_date_start_month','int');
+	$ls_date_start_year= GETPOST('ls_date_start_year','int');
+	//$ls_project_cost_share= GETPOST('ls_project_cost_share','int');
 
     
 }
@@ -98,7 +90,7 @@ $pagenext = $page + 1;
 
 
  // uncomment to avoid resubmision
-//if(isset( $_SESSION['projectsettlement_class'][$tms]))
+//if(isset( $_SESSION['projectcostshareholder_class'][$tms]))
 //{
 
  //   $cancel=TRUE;
@@ -120,21 +112,13 @@ if ($user->societe_id > 0 ||
 */
 
 // create object and set id or ref if provided as parameter
-$object=new Projectsettlement($db);
-if($id>0)
+$sub_object=new Projectcostshareholder($db);
+if($sub_id>0)
 {
-    $object->id=$id; 
-    $object->fetch($id);
-    $ref=dol_sanitizeFileName($object->ref);
+    $sub_object->id=$sub_id; 
+    $sub_object->fetch($sub_id);
 }
-if(!empty($ref))
-{
-    $object->ref=$ref; 
-    $object->id=$id; 
-    $object->fetch($id,$ref);
-    $ref=dol_sanitizeFileName($object->ref);
-    
-}
+
 
 
 /*******************************************************************
@@ -146,8 +130,8 @@ if(!empty($ref))
          
 // Action to remove record
  switch($action){
-    case 'confirm_delete':	
-       $result=($confirm=='yes')?$object->delete($user):0;
+    case 'sub_confirm_delete':	
+       $result=($confirm=='yes')?$sub_object->delete($user):0;
        if ($result > 0)
        {
                // Delete OK
@@ -156,17 +140,37 @@ if(!empty($ref))
        else
        {
                // Delete NOK
-               if (! empty($object->errors)) setEventMessages(null,$object->errors,'errors');
+               if (! empty($sub_object->errors)) setEventMessages(null,$sub_object->errors,'errors');
                else setEventMessage('RecordNotDeleted','errors');
        }
        break;
-    case 'delete':
-        if( $action=='delete' && ($id>0 || $ref!="")){
-         $ret=$form->form_confirm(dol_buildpath('/project_cost/share_card.php',1).'?action=confirm_delete&id='.$id,$langs->trans('DeleteProjectsettlement'),$langs->trans('ConfirmDelete'),'confirm_delete', '', 0, 1);
+    case 'sub_delete':
+        if(  ($sub_id>0 )){
+         $ret=$form->form_confirm($PHP_SELF.'?id='.$parent.'&sub_id='.$sub_id,$langs->trans('DeleteProjectcostsharemember'),$langs->trans('ConfirmDelete'),'sub_confirm_delete', '', 0, 1);
          if ($ret == 'html') print '<br />';
          //to have the object to be deleted in the background\
         }
-      
+              break;
+    case 'sub_add': //fixme
+        $sub_object->soc=GETPOST('Soc');
+        $sub_object->date_start=dol_mktime(0, 0, 0,GETPOST('Datestartmonth'),GETPOST('Datestartday'),GETPOST('Datestartyear'));
+        $sub_object->project_cost_share=$id;
+        $result=$sub_object->create($user);
+        if ($result > 0)
+        {
+                // Creation OK
+            // remove the tms
+               unset($_SESSION['Projectcostshareholder'][$tms]);
+               setEventMessage('RecordSucessfullyCreated', 'mesgs');
+               //ProjectcostshareReloadPage($backtopage,$result,'');
+
+        }else
+        {
+                // Creation KO
+                if (! empty($sub_object->errors)) setEventMessages(null, $sub_object->errors, 'errors');
+                else  setEventMessage('RecordNotSucessfullyCreated', 'errors');
+                //$action='create';
+        }   
     } 
 
 /***************************************************
@@ -174,15 +178,6 @@ if(!empty($ref))
 *
 * Put here all code to build page
 ****************************************************/
-
-llxHeader('','Projectsettlement','');
-print "<div> <!-- module body-->";
-        $project= new Project($db);
-        $project->fetch($projectid);
-        $headProject=project_prepare_head($project);
-         dol_fiche_head($headProject, 'settlement', $langs->trans("Project"), 0, 'project');
-                 print_barre_liste($langs->trans("Projectsettlement"),$page,$PHP_SELF,$param,$sortfield,$sortorder,'',$num,$nbtotalofrecords);
-print '</div>';
 
 $form=new Form($db);
 $formother=new FormOther($db);
@@ -207,19 +202,12 @@ jQuery(document).ready(function() {
 
     $sql = 'SELECT';
     $sql.= ' t.rowid,';
-    
-		$sql.=' t.ref,';
-		$sql.=' t.label,';
-		$sql.=' t.fk_project,';
-		$sql.=' t.description,';
-		$sql.=' t.date_settlement,';
-		$sql.=' t.import_key,';
-		$sql.=' t.status';
-
-    
-    $sql.= ' FROM '.MAIN_DB_PREFIX.'project_cost_settlement as t';
+    $sql.=' t.fk_soc,';
+    $sql.=' t.date_start,';
+    $sql.=' t.fk_project_cost_share';
+    $sql.= ' FROM '.MAIN_DB_PREFIX.'project_cost_share_holder as t';
     $sqlwhere='';
-    if(isset($object->entity))
+    if(isset($sub_object->entity))
         $sqlwhere.= ' AND t.entity = '.$conf->entity;
     if ($filter && $filter != -1)		// GETPOST('filtre') may be a string
     {
@@ -231,24 +219,22 @@ jQuery(document).ready(function() {
             }
     }
     //pass the search criteria
-    	if($ls_ref) $sqlwhere .= natural_search('t.ref', $ls_ref);
-	if($ls_label) $sqlwhere .= natural_search('t.label', $ls_label);
-	if($ls_date_settlement_month)$sqlwhere .= ' AND MONTH(t.date_settlement)="'.$ls_date_settlement_month."'";
-	if($ls_date_settlement_year)$sqlwhere .= ' AND YEAR(t.date_settlement)="'.$ls_date_settlement_year."'";
-	if($ls_status) $sqlwhere .= natural_search(array('t.status'), $ls_status);
-
-    
+    	if($ls_soc) $sqlwhere .= natural_search(array('t.fk_soc'), $ls_soc);
+	if($ls_date_start_month)$sqlwhere .= ' AND MONTH(t.date_start)="'.$ls_date_start_month."'";
+	if($ls_date_start_year)$sqlwhere .= ' AND YEAR(t.date_start)="'.$ls_date_start_year."'";
+	//if($ls_project_cost_share) $sqlwhere .= natural_search(array('t.fk_project_cost_share'), $ls_project_cost_share);
+     $sql.=' WHERE fk_project_cost_share=\''.$parent.'\' ';
     //list limit
     if(!empty($sqlwhere))
-        $sql.=' WHERE fk_project='.$projectid.$sqlwhere;
-    
+        $sql.=$sqlwhere;
 // Count total nb of records
 $nbtotalofrecords = 0;
 if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
 {
-        $sqlcount='SELECT COUNT(*) as count FROM '.MAIN_DB_PREFIX.'project_cost_settlement as t';
+        $sqlcount='SELECT COUNT(*) as count FROM '.MAIN_DB_PREFIX.'project_cost_share_holder as t';
+       $sqlcount.=' WHERE fk_project_cost_share=\''.$parent.'\' ';
         if(!empty($sqlwhere))
-            $sqlcount.=' WHERE fk_project='.$projectid.$sqlwhere;
+            $sqlcount.=$sqlwhere;
 	$result = $db->query($sqlcount);
         $nbtotalofrecords = ($result)?$objcount = $db->fetch_object($result)->count:0;
 }
@@ -266,58 +252,58 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     $resql=$db->query($sql);
     if ($resql)
     {
-        $param='&Projectid='.$projectid;
+        $param='';
         if (! empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param.='&contextpage='.urlencode($contextpage);
         if ($limit > 0 && $limit != $conf->liste_limit) $param.='&limit='.urlencode($limit);
-        	if (!empty($ls_ref))	$param.='&ls_ref='.urlencode($ls_ref);
-	if (!empty($ls_label))	$param.='&ls_label='.urlencode($ls_label);
-	if (!empty($ls_date_settlement_month))	$param.='&ls_date_settlement_month='.urlencode($ls_date_settlement_month);
-	if (!empty($ls_date_settlement_year))	$param.='&ls_date_settlement_year='.urlencode($ls_date_settlement_year);
-	if (!empty($ls_status))	$param.='&ls_status='.urlencode($ls_status);
+        	if (!empty($ls_soc))	$param.='&ls_soc='.urlencode($ls_soc);
+	if (!empty($ls_date_start_month))	$param.='&ls_date_start_month='.urlencode($ls_date_start_month);
+	if (!empty($ls_date_start_year))	$param.='&ls_date_start_year='.urlencode($ls_date_start_year);
+	if (!empty($ls_project_cost_share))	$param.='&ls_project_cost_share='.urlencode($ls_project_cost_share);
 
         
         if ($filter && $filter != -1) $param.='&filtre='.urlencode($filter);
         
         $num = $db->num_rows($resql);
         //print_barre_liste function defined in /core/lib/function.lib.php, possible to add a picto
-        //print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_companies', 0, '', '', $limit);
+        print_barre_liste($langs->trans("Projectcostshareholder"),$page,$PHP_SELF,$param,$sortfield,$sortorder,'',$num,$nbtotalofrecords);
+       // print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_companies', 0, '', '', $limit);
 
-        print '<form method="POST" action="'.$_SERVER["PHP_SELF"].'">';
-        print '<div class="div-table-responsive">';
-        print '<table class="liste listwithfilterbefore" width="100%">'."\n";
+        print '<form method="POST" action="?action=sub_add&id='.$parent.'&Projectid='.$projectid.'">';
+         print '<div class="div-table-responsive">';
+         print '<table class="liste" width="100%">'."\n";
         //TITLE
         print '<tr class="liste_titre">';
-        	print_liste_field_titre($langs->trans('Ref'),$PHP_SELF,'t.ref','',$param,'',$sortfield,$sortorder);
+        	print_liste_field_titre($langs->trans('Soc'),$PHP_SELF,'t.fk_soc','',$param,'',$sortfield,$sortorder);
 	print "\n";
-	print_liste_field_titre($langs->trans('Label'),$PHP_SELF,'t.label','',$param,'',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Datestart'),$PHP_SELF,'t.date_start','',$param,'',$sortfield,$sortorder);
 	print "\n";
-	print_liste_field_titre($langs->trans('Datesettlement'),$PHP_SELF,'t.date_settlement','',$param,'',$sortfield,$sortorder);
-	print "\n";
-	print_liste_field_titre($langs->trans('Status'),$PHP_SELF,'t.status','',$param,'',$sortfield,$sortorder);
-	print "\n";
+	//print_liste_field_titre($langs->trans('Projectcostshare'),$PHP_SELF,'t.fk_project_cost_share','',$param,'',$sortfield,$sortorder);
+	//print "\n";
 
         
         print '</tr>';
         //SEARCH FIELDS
-        print '<tr class="liste_titre_filter">'; 
-        //Search field forref
+  /*      print '<tr class="liste_titre">'; 
+        //Search field forsoc
 	print '<td class="liste_titre" colspan="1" >';
-	print '<input class="flat" size="16" type="text" name="ls_ref" value="'.$ls_ref.'">';
+		$sql_soc=array('table'=> 'soc','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+		$html_soc=array('name'=>'$ls_soc','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+		$addChoicessoc=null;
+		print select_sellist($sql_soc,$html_soc, $ls_soc,$addChoices_soc );
 	print '</td>';
-//Search field forlabel
+//Search field fordate_start
 	print '<td class="liste_titre" colspan="1" >';
-	print '<input class="flat" size="16" type="text" name="ls_label" value="'.$ls_label.'">';
+	print '<input class="flat" type="text" size="1" maxlength="2" name="date_start_month" value="'.$ls_date_start_month.'">';
+	$syear = $ls_date_start_year;
+	$formother->select_year($syear?$syear:-1,'ls_date_start_year',1, 20, 5);
 	print '</td>';
-//Search field fordate_settlement
-	print '<td class="liste_titre" colspan="1" >';
-	print '<input class="flat" type="text" size="1" maxlength="2" name="date_settlement_month" value="'.$ls_date_settlement_month.'">';
-	$syear = $ls_date_settlement_year;
-	$formother->select_year($syear?$syear:-1,'ls_date_settlement_year',1, 20, 5);
-	print '</td>';
-//Search field forstatus
-	print '<td class="liste_titre" colspan="1" >';
-	print '<input class="flat" size="16" type="text" name="ls_status" value="'.$ls_status.'">';
-	print '</td>';
+//Search field forproject_cost_share
+	//print '<td class="liste_titre" colspan="1" >';
+	//	$sql_project_cost_share=array('table'=> 'project_cost_share','keyfield'=> 'rowid','fields'=>'ref,label', 'join' => '', 'where'=>'','tail'=>'');
+	//	$html_project_cost_share=array('name'=>'$ls_project_cost_share','class'=>'','otherparam'=>'','ajaxNbChar'=>'','separator'=> '-');
+	//	$addChoicesproject_cost_share=null;
+	//	print select_sellist($sql_project_cost_share,$html_project_cost_share, $ls_project_cost_share,$addChoices_project_cost_share );
+	//print '</td>';
 
         
         
@@ -325,23 +311,36 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
         print '<input type="image" class="liste_titre" name="search" src="'.img_picto($langs->trans("Search"),'search.png','','',1).'" value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
         print '<input type="image" class="liste_titre" name="removefilter" src="'.img_picto($langs->trans("Search"),'searchclear.png','','',1).'" value="'.dol_escape_htmltag($langs->trans("RemoveFilter")).'" title="'.dol_escape_htmltag($langs->trans("RemoveFilter")).'">';
         print '</td>';
-        print '</tr>'."\n"; 
+        print '</tr>'."\n"; */
         $i=0;
-        $basedurl=dirname($PHP_SELF).'/settlement_card.php?action=view&Projectid='.$projectid.'&id=';
-        while ($i < $num && $i<$limit)
+        print "<tr><td>";
+        print '<input type="hidden" name="tms" value="'.$tms.'">';
+        print '<input type="hidden" name="backtopage" value="'.$backtopage.'">';
+        print '<input type="hidden" value="'.$parent.'" name="id"> ';
+//.print_sellist($sqlarray, $parent, '' );
+
+        //print '</td><td>';
+        $filteronlist='';
+       print $form->select_company(GETPOST('Soc','int'), 'Soc', $filteronlist, 'SelectThirdParty', 1, 0, array(), 0, 'minwidth300');
+        print '</td><td >';
+        $form->select_date(-1,'Datestart');
+        print '</td><td><input class="butAction" type="submit" value="'.$langs->trans('Add')." ".$langs->trans('Projectcostshareholder').'">';
+        print "</td></tr>";
+        //$basedurl=dirname($PHP_SELF).'/shareholder_card.php?action=view&subId=';
+        $thirdPaty= New Societe($db);
+       while ($i < $num && $i<$limit)
         {
             $obj = $db->fetch_object($resql);
             if ($obj)
             {
                 // You can use here results
-                		print "<tr class=\"oddeven')\"  onclick=\"location.href='";
-	print $basedurl.$obj->rowid."'\" >";
-        $object->project=$projectid;
-		print "<td>".$object->getNomUrl($obj->ref,'',$obj->ref,0)."</td>";
-		print "<td>".$obj->label."</td>";
-		print "<td>".dol_print_date($db->jdate($obj->date_settlement),'day')."</td>";
-		print "<td>".$object->LibStatut($obj->status,3)."</td>";
-		print '<td><a href="settlement_card.php?action=delete&Projectid='.$projectid.'&id='.$obj->rowid.'">'.img_delete().'</a></td>';
+                print "<tr class=\"oddeven\" >";
+		print "<td>". $filteronlist = '';
+                $thirdPaty->fetch($obj->fk_soc);
+                print $thirdPaty->getNomUrl(1, 'project');
+                print "</td><td>".dol_print_date($db->jdate($obj->date_start),'day')."</td>";
+			
+                print '<td><a href="?action=sub_delete&sub_id='.$obj->rowid.'&id='.$parent.'&Projectid='.$projectid.'">'.img_delete().'</a></td>';
 		print "</tr>";
 
                 
@@ -360,14 +359,7 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     print '</div>';
     print '</form>'."\n";
     // new button
-    print '<a href="settlement_card.php?action=create&Projectid='.$projectid.'" class="butAction" role="button">'.$langs->trans('New');
-    print ' '.$langs->trans('Projectsettlement')."</a>\n";
+
 
     
 
-
-
-
-// End of page
-llxFooter();
-$db->close();

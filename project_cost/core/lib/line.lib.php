@@ -1,7 +1,7 @@
 <?php
 /* 
  * Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) ---Put here your own copyright and developer email---
+ * Copyright (C) Patrick Delcroix <pmpdelcroix@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ function ProjectcostlinePrepareHead($object)
 	$h = 0;
 	$head = array();
 
-	$head[$h][0] = dol_buildpath("/project_cost/line_card.php", 1).'?id='.$object->id;
+	$head[$h][0] = dol_buildpath("/project_cost/line_card.php", 1).'?id='.$object->id.'&Projectid='.$object->project;
 	$head[$h][1] = $langs->trans("Card");
 	$head[$h][2] = 'card';
 	$h++;
@@ -63,7 +63,7 @@ function ProjectcostlinePrepareHead($object)
 		$nbNote = 0;
 		if (!empty($object->note_private)) $nbNote++;
 		if (!empty($object->note_public)) $nbNote++;
-		$head[$h][0] = dol_buildpath('/project_cost/line_note.php', 1).'?id='.$object->id;
+		$head[$h][0] = dol_buildpath('/project_cost/line_note.php', 1).'?id='.$object->id.'&Projectid='.$object->project;
 		$head[$h][1] = $langs->trans('Notes');
 		if ($nbNote > 0) $head[$h][1].= ' <span class="badge">'.$nbNote.'</span>';
 		$head[$h][2] = 'note';
@@ -75,16 +75,16 @@ function ProjectcostlinePrepareHead($object)
 	$upload_dir = $conf->project_cost->dir_output . "/Projectcostline/" . dol_sanitizeFileName($object->ref);
 	$nbFiles = count(dol_dir_list($upload_dir,'files',0,'','(\.meta|_preview.*\.png)$'));
 	$nbLinks=Link::count($db, $object->element, $object->id);
-	$head[$h][0] = dol_buildpath("/project_cost/line_document.php", 1).'?id='.$object->id;
+	$head[$h][0] = dol_buildpath("/project_cost/line_document.php", 1).'?id='.$object->id.'&Projectid='.$object->project;
 	$head[$h][1] = $langs->trans('Documents');
 	if (($nbFiles+$nbLinks) > 0) $head[$h][1].= ' <span class="badge">'.($nbFiles+$nbLinks).'</span>';
 	$head[$h][2] = 'document';
 	$h++;
 
-	$head[$h][0] = dol_buildpath("/project_cost/line_agenda.php", 1).'?id='.$object->id;
-	$head[$h][1] = $langs->trans("Events");
-	$head[$h][2] = 'agenda';
-	$h++;
+	//$head[$h][0] = dol_buildpath("/project_cost/line_agenda.php", 1).'?id='.$object->id.'&Projectid='.$object->project;
+	//$head[$h][1] = $langs->trans("Events");
+	//$head[$h][2] = 'agenda';
+	//$h++;
 
 	// Show more tabs from modules
 	// Entries must be declared in modules descriptor with line

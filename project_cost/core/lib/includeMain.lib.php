@@ -26,7 +26,9 @@ $path=dirname(__FILE__);
 if (! $res && file_exists($path."/dev.inc.php")) {
     $res=@include $path.'/dev.inc.php';
 }
-if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
+if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])){
+    $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
+}
 if (! $res && file_exists($path."/../../../main.inc.php")){
     $res=@include $path.'/../../../main.inc.php'; // in HTdocs
     $_SERVER["CONTEXT_DOCUMENT_ROOT"]=realpath($path."/../../../");
